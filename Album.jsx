@@ -4,6 +4,7 @@ import { SELECCIONES } from './utils';
 export default function Album({ perfil, alternarCromoManual, isMuted }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
+  const [filtro, setFiltro] = useState('todos'); // 'todos', 'faltantes', 'repetidos'
 
   const playPopSound = () => {
     if (isMuted) return; // Se omite el sonido si está silenciado
@@ -44,9 +45,30 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
     return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
   };
 
+  // Filtramos las selecciones para ocultar los países que no tienen cromos que coincidan
+  const seleccionesFiltradas = SELECCIONES.filter(sel => {
+    if (filtro === 'todos') return true;
+    for (let i = 0; i < sel.total; i++) {
+      const estado = perfil.stickers?.[`${sel.id}_${i.toString().padStart(2, '0')}`] || 0;
+      if (filtro === 'faltantes' && estado === 0) return true;
+      if (filtro === 'repetidos' && estado >= 2) return true;
+    }
+    return false;
+  });
+
   return (
-    <div className="card" style={{ padding: '12px' }}>
-      {SELECCIONES.map(sel => {
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div className="card" style={{ display: 'flex', gap: '8px', padding: '12px' }}>
+        <button onClick={() => setFiltro('todos')} className="btn-secondary" style={{ flex: 1, background: filtro === 'todos' ? 'var(--accent-primary)' : '', color: filtro === 'todos' ? '#FFF' : '', borderColor: filtro === 'todos' ? 'var(--accent-primary)' : '' }}>Todos</button>
+        <button onClick={() => setFiltro('faltantes')} className="btn-secondary" style={{ flex: 1, background: filtro === 'faltantes' ? '#EF4444' : '', color: filtro === 'faltantes' ? '#FFF' : '', borderColor: filtro === 'faltantes' ? '#EF4444' : '' }}>Faltan</button>
+        <button onClick={() => setFiltro('repetidos')} className="btn-secondary" style={{ flex: 1, background: filtro === 'repetidos' ? '#F59E0B' : '', color: filtro === 'repetidos' ? '#FFF' : '', borderColor: filtro === 'repetidos' ? '#F59E0B' : '' }}>Repes</button>
+      </div>
+
+      <div className="card" style={{ padding: '12px' }}>
+        {seleccionesFiltradas.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '14px' }}>No hay cromos que coincidan con este filtro.</div>
+        )}
+        {seleccionesFiltradas.map(sel => {
         let tEnFila = 0;
         for (let i = 0; i < sel.total; i++) {
           if ((perfil.stickers?.[`${sel.id}_${i.toString().padStart(2, '0')}`] || 0) >= 1) tEnFila++;
@@ -71,25 +93,35 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
               <span style={{ color: '#94A3B8', fontSize: '10px' }}>{seleccionExpandida === sel.id ? '▲' : '▼'}</span>
             </div>
             {seleccionExpandida === sel.id && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px', marginTop: '12px', background: '#F8FAFC', padding: '12px', borderRadius: '16px' }}>
-                {Array.from({ length: sel.total }).map((_, index) => {
-                  const numeroVisual = index + 1;
-                  const codigo = `${sel.id}_${index.toString().padStart(2, '0')}`;
-                  const estado = perfil.stickers?.[codigo] || 0;
-                  let bg = estado === 1 ? '#10B981' : estado >= 2 ? '#F59E0B' : '#EF4444';
-                  let txt = numeroVisual === 1 ? '🛡️ Escudo' : `${sel.id} ${numeroVisual}`;
-                  if (estado >= 2) txt += ` (x${estado - 1})`;
-                  return (
-                    <button key={codigo} onClick={() => handleStickerClick(codigo)} className={`sticker-btn ${animatingSticker === codigo ? 'animate-pop' : ''}`} style={{ background: bg }}>
-                      {txt}
-                    </button>
-                  );
-                })}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px', marginTop: '12px', background: 'var(--bg-input)', padding: '12px', borderRadius: '16px' }}>
+                {Array.from({ length: sel.total })
+                  .map((_, index) => {
+                    const numeroVisual = index + 1;
+                    const codigo = `${sel.id}_${index.toString().padStart(2, '0')}`;
+                    const estado = perfil.stickers?.[codigo] || 0;
+                    return { codigo, numeroVisual, estado };
+                  })
+                  .filter(s => {
+                    if (filtro === 'faltantes') return s.estado === 0;
+                    if (filtro === 'repetidos') return s.estado >= 2;
+                    return true;
+                  })
+                  .map(s => {
+                    let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
+                    let txt = s.numeroVisual === 1 ? '🛡️ Escudo' : `${sel.id} ${s.numeroVisual}`;
+                    if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
+                    return (
+                      <button key={s.codigo} onClick={() => handleStickerClick(s.codigo)} className={`sticker-btn ${animatingSticker === s.codigo ? 'animate-pop' : ''}`} style={{ background: bg }}>
+                        {txt}
+                      </button>
+                    );
+                  })}
               </div>
             )}
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

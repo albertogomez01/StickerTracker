@@ -21,6 +21,14 @@ export default function Footer({ seccionActual, setSeccionActual }) {
         <span className="footer-nav-btn__icon">🔄</span>
         <span className="footer-nav-btn__label">Intercambios</span>
       </button>
+      <button onClick={() => setSeccionActual('mercado')} className={getButtonClass('mercado')}>
+        <span className="footer-nav-btn__icon">🌍</span>
+        <span className="footer-nav-btn__label">Mercado</span>
+      </button>
+      <button onClick={() => setSeccionActual('stats')} className={getButtonClass('stats')}>
+        <span className="footer-nav-btn__icon">📊</span>
+        <span className="footer-nav-btn__label">Stats</span>
+      </button>
     </div>
   );
 }

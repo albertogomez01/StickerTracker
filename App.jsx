@@ -8,8 +8,10 @@ import Footer from './Footer';
 import Album from './Album';
 import Importar from './Importar';
 import Intercambios from './Intercambios';
+import Mercado from './Mercado';
+import Estadisticas from './Estadisticas';
 import { db, auth } from './firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 
 export default function App() {
@@ -30,15 +32,71 @@ export default function App() {
     }
   });
   const [showConfetti, setShowConfetti] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('panini_theme') || 'light');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('panini_theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    // Pedir permiso para enviar notificaciones web (si el navegador lo soporta)
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!perfil?.id) return;
+    
+    // 🎧 Escuchamos los cambios de Firestore en tiempo real
+    const unsub = onSnapshot(doc(db, "usuarios", perfil.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setPerfil(prev => {
+          if (!prev) return data;
+          // Comparamos para evitar bucles si el cambio lo hicimos nosotros mismos en este dispositivo
+          if (JSON.stringify(prev.stickers) !== JSON.stringify(data.stickers)) {
+            return { ...prev, stickers: data.stickers };
+          }
+          return prev;
+        });
+      }
+    });
+    return () => unsub();
+  }, [perfil?.id]);
+
+  useEffect(() => {
+    if (!perfil?.id) return;
+    
+    // 🎧 Escuchamos la colección de notificaciones en tiempo real
+    const unsubNotifs = onSnapshot(doc(db, "notificaciones", perfil.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data().lista || [];
+        const noLeidas = data.filter(n => !n.read);
+        
+        if (noLeidas.length > 0) {
+          // Lanzar notificación nativa por cada aviso no leído
+          if ("Notification" in window && Notification.permission === "granted") {
+            noLeidas.forEach(n => new Notification("Nuevo Intercambio 🔄", { body: n.text, icon: '/pwa-192x192.png' }));
+          } else {
+            // Fallback: usar un alert estándar si no dio permisos
+            alert("🔔 Nueva notificación:\n" + noLeidas.map(n => n.text).join('\n'));
+          }
+          
+          // Marcar como leídas automáticamente en Firestore para no repetir
+          const marcadas = data.map(n => ({ ...n, read: true }));
+          setDoc(doc(db, "notificaciones", perfil.id), { lista: marcadas });
+        }
+      }
+    });
+    return () => unsubNotifs();
+  }, [perfil?.id]);
 
   useEffect(() => {
     try {
       if (perfil) {
         localStorage.setItem('panini_perfil', JSON.stringify(perfil));
-        // Guardado automático en la nube cada vez que cambia el perfil
-        if (perfil.id) {
-          setDoc(doc(db, "usuarios", perfil.id), perfil).catch(e => console.error("Error nube:", e));
-        }
       } else {
         // Si el perfil es null (logout), lo removemos
         localStorage.removeItem('panini_perfil');
@@ -54,6 +112,10 @@ export default function App() {
       try { localStorage.setItem('panini_muted', String(newVal)); } catch (e) {}
       return newVal;
     });
+  };
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
   const handleLogout = async () => {
@@ -81,20 +143,26 @@ export default function App() {
   };
 
   const alternarCromoManual = (codigo) => {
-    const copia = { ...perfil.stickers };
-    const valor = copia[codigo] !== undefined ? copia[codigo] : 0;
-    copia[codigo] = valor === 0 ? 1 : valor === 1 ? 2 : valor < 11 ? valor + 1 : 0;
-    setPerfil(prev => ({ ...prev, stickers: copia }));
+    setPerfil(prev => {
+      const copia = { ...prev.stickers };
+      const valor = copia[codigo] !== undefined ? copia[codigo] : 0;
+      copia[codigo] = valor === 0 ? 1 : valor === 1 ? 2 : valor < 11 ? valor + 1 : 0;
+      const nuevoPerfil = { ...prev, stickers: copia };
+      // Guardamos en la nube inmediatamente al hacer clic
+      if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      return nuevoPerfil;
+    });
   };
 
   const procesarImportadorTexto = (texto, tipo) => {
-
-    const nuevaCopia = parsearTextoAStickers(texto, tipo, perfil.stickers);
-
-    setPerfil(prev => ({ ...prev, stickers: nuevaCopia }));
-
+    setPerfil(prev => {
+      const nuevaCopia = parsearTextoAStickers(texto, tipo, prev.stickers);
+      const nuevoPerfil = { ...prev, stickers: nuevaCopia };
+      // Guardamos en la nube inmediatamente al importar
+      if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      return nuevoPerfil;
+    });
     alert(`¡Lista de ${tipo} procesada correctamente!`);
-
   };
 
   // Contadores Propios
@@ -132,21 +200,30 @@ export default function App() {
   return (
     <div className="app-container">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
-      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} />
+      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} />
       <div className="content-wrapper" style={{ marginTop: '16px' }}>
-        <div className="card stats-card">
-          <div className="stats-grid">
-            <div><div style={{ fontSize: '18px', fontWeight: '800', color: '#059669' }}>{tienesCount}</div><div style={{ fontSize: '11px', color: '#64748B' }}>Tengo</div></div>
-            <div><div style={{ fontSize: '18px', fontWeight: '800', color: '#D97706' }}>{repetidasCount}</div><div style={{ fontSize: '11px', color: '#64748B' }}>Repes</div></div>
-            <div><div style={{ fontSize: '18px', fontWeight: '800', color: '#E11D48' }}>{faltanCount}</div><div style={{ fontSize: '11px', color: '#64748B' }}>Faltan</div></div>
+        <div className="card stats-card-modern">
+          <div className="stats-header">
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-primary)' }}>Progreso del Álbum</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{tienesCount} de {TOTAL_STICKERS} cromos</span>
+            </div>
+            <span className="stats-pct">{pctGlobal}%</span>
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10B981' }}>{pctGlobal}%</div>
+          <div className="stats-progress-bar-container"><div className="stats-progress-bar-fill" style={{ width: `${pctGlobal}%` }}></div></div>
+          <div className="stats-grid-modern">
+            <div className="stat-item have"><span className="stat-value">{tienesCount}</span><span className="stat-label">Tengo</span></div>
+            <div className="stat-item repes"><span className="stat-value">{repetidasCount}</span><span className="stat-label">Repes</span></div>
+            <div className="stat-item missing"><span className="stat-value">{faltanCount}</span><span className="stat-label">Faltan</span></div>
+          </div>
         </div>
       </div>
       <div className="content-wrapper">
         {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} />}
         {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} />}
         {seccionActual === 'intercambios' && <Intercambios perfil={perfil} />}
+        {seccionActual === 'mercado' && <Mercado perfil={perfil} />}
+        {seccionActual === 'stats' && <Estadisticas />}
       </div>
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
     </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { parsearTextoAStickers } from './utils';
 import AmigoCard from './AmigoCard';
 import { db } from './firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 export default function Intercambios({ perfil }) {
   const [comunidadUsuarios, setComunidadUsuarios] = useState([]);
@@ -11,31 +11,35 @@ export default function Intercambios({ perfil }) {
   const [busquedaAmigo, setBusquedaAmigo] = useState('');
 
   useEffect(() => {
-    const cargarAmigos = async () => {
-      if (perfil?.id) {
-        const docRef = doc(db, "amigos", perfil.id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setComunidadUsuarios(docSnap.data().lista || []);
-        } else {
-          const guardado = localStorage.getItem('panini_amigos');
-          if (guardado) setComunidadUsuarios(JSON.parse(guardado));
-        }
+    if (!perfil?.id) {
+      setDatosCargados(true);
+      return;
+    }
+    
+    // 🎧 Escuchamos la lista de amigos en tiempo real
+    const unsub = onSnapshot(doc(db, "amigos", perfil.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data().lista || [];
+        setComunidadUsuarios(prev => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
+      } else {
+        const guardado = localStorage.getItem('panini_amigos');
+        if (guardado) setComunidadUsuarios(JSON.parse(guardado));
       }
       setDatosCargados(true);
-    };
-    cargarAmigos();
+    });
+    return () => unsub();
   }, [perfil?.id]);
 
   useEffect(() => {
     if (!datosCargados) return; // No guardamos hasta haber cargado primero
     try {
       localStorage.setItem('panini_amigos', JSON.stringify(comunidadUsuarios));
-      if (perfil?.id) {
-        setDoc(doc(db, "amigos", perfil.id), { lista: comunidadUsuarios }).catch(e => console.error("Error nube:", e));
-      }
     } catch (error) { console.error("Error al guardar amigos:", error); }
-  }, [comunidadUsuarios, datosCargados, perfil?.id]);
+  }, [comunidadUsuarios, datosCargados]);
+
+  const guardarEnNube = (nuevaLista) => {
+    if (perfil?.id) setDoc(doc(db, "amigos", perfil.id), { lista: nuevaLista }).catch(e => console.error(e));
+  };
 
   const añadirAmigoNuevo = (e) => {
     e.preventDefault();
@@ -45,24 +49,36 @@ export default function Intercambios({ perfil }) {
       return alert("Este amigo ya está en tu lista.");
     }
     const nuevoAmigo = { id: 'u_' + Date.now(), nickname: nombreLimpio, stickers: {}, rawFaltantes: '', rawRepetidos: '' };
-    setComunidadUsuarios(prev => [nuevoAmigo, ...prev]);
+    setComunidadUsuarios(prev => {
+      const nueva = [nuevoAmigo, ...prev];
+      guardarEnNube(nueva);
+      return nueva;
+    });
     setNuevoAmigoNombre('');
   };
 
   const eliminarAmigo = (idAmigo) => {
     if (!window.confirm("¿Seguro que quieres eliminar a este amigo de tu lista?")) return;
-    setComunidadUsuarios(prev => prev.filter(u => u.id !== idAmigo));
+    setComunidadUsuarios(prev => {
+      const nueva = prev.filter(u => u.id !== idAmigo);
+      guardarEnNube(nueva);
+      return nueva;
+    });
   };
 
-  const guardarListasAmigo = (idAmigo, faltantes, repetidos) => {
-    setComunidadUsuarios(prev => prev.map(u => {
-      if (u.id === idAmigo) {
-        let nuevosStickers = parsearTextoAStickers(faltantes, 'faltantes', {});
-        nuevosStickers = parsearTextoAStickers(repetidos, 'repetidos', nuevosStickers);
-        return { ...u, stickers: nuevosStickers, rawFaltantes: faltantes, rawRepetidos: repetidos };
-      }
-      return u;
-    }));
+  const guardarListasAmigo = (idAmigo, faltantes, repetidos, avatarColor) => {
+    setComunidadUsuarios(prev => {
+      const nueva = prev.map(u => {
+        if (u.id === idAmigo) {
+          let nuevosStickers = parsearTextoAStickers(faltantes, 'faltantes', {});
+          nuevosStickers = parsearTextoAStickers(repetidos, 'repetidos', nuevosStickers);
+          return { ...u, stickers: nuevosStickers, rawFaltantes: faltantes, rawRepetidos: repetidos, avatarColor };
+        }
+        return u;
+      });
+      guardarEnNube(nueva);
+      return nueva;
+    });
   };
 
   const amigosFiltrados = comunidadUsuarios.filter(u => u.nickname.toLowerCase().includes(busquedaAmigo.toLowerCase()));
