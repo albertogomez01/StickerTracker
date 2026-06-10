@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "deploy:staging": "vercel deploy --target=staging",
+    "env:pull": "vercel pull --environment=staging"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.31",
