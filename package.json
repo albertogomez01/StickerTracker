@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "deploy:staging": "vercel deploy --target=staging",
+    "deploy:prod": "vercel --prod",
     "env:pull": "vercel pull --environment=staging"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
+    "vercel": "^35.2.4",
     "vite": "^5.0.12"
   }
 }

@@ -25,7 +25,7 @@ export default function LoginScreen({ onLogin }) {
           <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>Nickname</label>
           <input type="text" required value={nickInput} onChange={(e) => setNickInput(e.target.value)} className="input-field" />
         </div>
-        <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', borderRadius: '10px' }}>Iniciar Aplicación</button>
+        <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '8px' }}>Iniciar Aplicación</button>
       </form>
     </div>
   );

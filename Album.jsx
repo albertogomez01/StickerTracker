@@ -18,8 +18,8 @@ export default function Album({ perfil, alternarCromoManual }) {
           if ((perfil.stickers?.[`${sel.id}_${i.toString().padStart(2, '0')}`] || 0) >= 1) tEnFila++;
         }
         return (
-          <div key={sel.id} style={{ borderBottom: '1px solid #F1F5F9', padding: '10px 0' }}>
-            <div onClick={() => setSeleccionExpandida(seleccionExpandida === sel.id ? null : sel.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+          <div key={sel.id} style={{ borderBottom: '1px solid #F1F5F9', padding: '14px 0' }}>
+            <div onClick={() => setSeleccionExpandida(seleccionExpandida === sel.id ? null : sel.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
                 {renderDigitalFlag(sel)}
                 <span style={{ fontWeight: '700', fontSize: '13px', width: '40px' }}>{sel.id}</span>
@@ -28,7 +28,7 @@ export default function Album({ perfil, alternarCromoManual }) {
               <span style={{ color: '#94A3B8', fontSize: '10px' }}>{seleccionExpandida === sel.id ? '▲' : '▼'}</span>
             </div>
             {seleccionExpandida === sel.id && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '6px', marginTop: '10px', background: '#F8FAFC', padding: '8px', borderRadius: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px', marginTop: '12px', background: '#F8FAFC', padding: '12px', borderRadius: '16px' }}>
                 {Array.from({ length: sel.total }).map((_, index) => {
                   const numeroVisual = index + 1;
                   const codigo = `${sel.id}_${index.toString().padStart(2, '0')}`;
@@ -37,7 +37,7 @@ export default function Album({ perfil, alternarCromoManual }) {
                   let txt = numeroVisual === 1 ? '🛡️ Escudo' : `${sel.id} ${numeroVisual}`;
                   if (estado >= 2) txt += ` (x${estado - 1})`;
                   return (
-                    <button key={codigo} onClick={() => alternarCromoManual(codigo)} style={{ background: bg, color: '#FFF', border: 'none', padding: '8px 2px', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', minHeight: '36px' }}>
+                    <button key={codigo} onClick={() => alternarCromoManual(codigo)} className="sticker-btn" style={{ background: bg }}>
                       {txt}
                     </button>
                   );

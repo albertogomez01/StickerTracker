@@ -162,7 +162,7 @@ export default function Intercambios({ perfil }) {
                           candidatosLeDoy.map(c => {
                             const desmarcado = exclusionesTrueque[`${amigo.id}_${c.cod}`];
                             return (
-                              <div key={c.cod} onClick={() => alternarCromoEnTabla(amigo.id, c.cod)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px', borderRadius: '6px', cursor: 'pointer', background: desmarcado ? '#F1F5F9' : '#EF4444', color: desmarcado ? '#94A3B8' : '#FFF', fontSize: '11px', fontWeight: 'bold', marginBottom: '4px', textDecoration: desmarcado ? 'line-through' : 'none' }}>
+                            <div key={c.cod} onClick={() => alternarCromoEnTabla(amigo.id, c.cod)} className="trade-sticker" style={{ background: desmarcado ? '#F1F5F9' : '#EF4444', color: desmarcado ? '#94A3B8' : '#FFF', textDecoration: desmarcado ? 'line-through' : 'none' }}>
                                 {desmarcado ? '❌' : '✓'} {c.tag}
                               </div>
                             );
@@ -174,7 +174,7 @@ export default function Intercambios({ perfil }) {
                           candidatosElMeDa.map(c => {
                             const desmarcado = exclusionesTrueque[`${amigo.id}_${c.cod}`];
                             return (
-                              <div key={c.cod} onClick={() => alternarCromoEnTabla(amigo.id, c.cod)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px', borderRadius: '6px', cursor: 'pointer', background: desmarcado ? '#F1F5F9' : '#F59E0B', color: desmarcado ? '#94A3B8' : '#FFF', fontSize: '11px', fontWeight: 'bold', marginBottom: '4px', textDecoration: desmarcado ? 'line-through' : 'none' }}>
+                            <div key={c.cod} onClick={() => alternarCromoEnTabla(amigo.id, c.cod)} className="trade-sticker" style={{ background: desmarcado ? '#F1F5F9' : '#F59E0B', color: desmarcado ? '#94A3B8' : '#FFF', textDecoration: desmarcado ? 'line-through' : 'none' }}>
                                 {desmarcado ? '❌' : '➡️'} {c.tag}
                               </div>
                             );
@@ -183,10 +183,10 @@ export default function Intercambios({ perfil }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    <button onClick={() => { setEditandoAmigoId(amigo.id); setAmigoFaltantesInput(amigo.rawFaltantes || ''); setAmigoRepetidosInput(amigo.rawRepetidos || ''); }} className="btn-primary" style={{ background: '#FFF', color: '#1E293B', border: '1px solid #CBD5E1', fontSize: '12px' }}>✍️ Sus cromos</button>
-                    <button onClick={() => descargarImagenTrueque(amigo.nickname, realesLeDoy.map(x=>x.tag), realesElMeDa.map(x=>x.tag))} className="btn-primary" style={{ fontSize: '12px' }}>🖼️ Generar imagen</button>
-                    <button onClick={() => eliminarAmigo(amigo.id)} className="btn-danger">🗑️ Eliminar</button>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button onClick={() => { setEditandoAmigoId(amigo.id); setAmigoFaltantesInput(amigo.rawFaltantes || ''); setAmigoRepetidosInput(amigo.rawRepetidos || ''); }} className="btn-secondary" style={{ flex: '1 1 30%' }}>✍️ Editar</button>
+                    <button onClick={() => descargarImagenTrueque(amigo.nickname, realesLeDoy.map(x=>x.tag), realesElMeDa.map(x=>x.tag))} className="btn-primary" style={{ flex: '1 1 50%' }}>🖼️ Generar imagen</button>
+                    <button onClick={() => eliminarAmigo(amigo.id)} className="btn-danger" style={{ flex: '1 1 100%' }}>🗑️ Eliminar</button>
                   </div>
                 </div>
               )}

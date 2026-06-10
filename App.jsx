@@ -95,7 +95,7 @@ export default function App() {
   return (
     <div className="app-container">
       <Header perfil={perfil} onLogout={handleLogout} />
-      <div className="content-wrapper" style={{ marginTop: '10px' }}>
+      <div className="content-wrapper" style={{ marginTop: '16px' }}>
         <div className="card stats-card">
           <div className="stats-grid">
             <div><div style={{ fontSize: '18px', fontWeight: '800', color: '#059669' }}>{tienesCount}</div><div style={{ fontSize: '11px', color: '#64748B' }}>Tengo</div></div>

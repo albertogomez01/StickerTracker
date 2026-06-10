@@ -2,6 +2,11 @@
 
 Aplicación web para gestionar mis cromos del mundial.
 
+## Comandos útiles de Vercel (Producción)
+
+* **Desplegar a producción (Versión en vivo para los usuarios):**
+  `vercel --prod`
+
 ## Comandos útiles de Vercel (Staging)
 
 * **Deploy to a custom environment named "staging":**
