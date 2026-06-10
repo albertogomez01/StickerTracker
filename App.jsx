@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import Confetti from 'react-confetti';
 import { SELECCIONES, TOTAL_STICKERS, parsearTextoAStickers } from './utils';
 import LoginScreen from './LoginScreen';
 import Header from './Header';
@@ -18,6 +19,14 @@ export default function App() {
       return null;
     }
   });
+  const [isMuted, setIsMuted] = useState(() => {
+    try {
+      return localStorage.getItem('panini_muted') === 'true';
+    } catch (error) {
+      return false;
+    }
+  });
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     try {
@@ -31,6 +40,14 @@ export default function App() {
       console.error("Error al guardar el perfil en localStorage:", error);
     }
   }, [perfil]);
+
+  const toggleMute = () => {
+    setIsMuted(prev => {
+      const newVal = !prev;
+      try { localStorage.setItem('panini_muted', String(newVal)); } catch (e) {}
+      return newVal;
+    });
+  };
 
   const handleLogout = () => {
     if (window.confirm("¿Seguro que quieres cerrar sesión? Se borrarán tus datos guardados.")) {
@@ -84,6 +101,14 @@ export default function App() {
 
   const pctGlobal = Math.round((tienesCount / TOTAL_STICKERS) * 100) || 0;
 
+  useEffect(() => {
+    if (pctGlobal === 100) {
+      setShowConfetti(true);
+      // Detenemos el confeti después de 10 segundos para ahorrar recursos
+      const timer = setTimeout(() => setShowConfetti(false), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [pctGlobal]);
 
 
   if (!perfil) {
@@ -94,7 +119,8 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Header perfil={perfil} onLogout={handleLogout} />
+      {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
+      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} />
       <div className="content-wrapper" style={{ marginTop: '16px' }}>
         <div className="card stats-card">
           <div className="stats-grid">
@@ -106,7 +132,7 @@ export default function App() {
         </div>
       </div>
       <div className="content-wrapper">
-        {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} />}
+        {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} />}
         {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} />}
         {seccionActual === 'intercambios' && <Intercambios perfil={perfil} />}
       </div>

@@ -1,8 +1,42 @@
 import React, { useState } from 'react';
 import { SELECCIONES } from './utils';
 
-export default function Album({ perfil, alternarCromoManual }) {
+export default function Album({ perfil, alternarCromoManual, isMuted }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
+  const [animatingSticker, setAnimatingSticker] = useState(null);
+
+  const playPopSound = () => {
+    if (isMuted) return; // Se omite el sonido si está silenciado
+
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.type = 'sine';
+      // Empieza en un tono agudo y baja rápidamente para sonar como una burbuja o "pop"
+      oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {
+      // Ignorar si el navegador tiene el audio bloqueado o no lo soporta
+    }
+  };
+
+  const handleStickerClick = (codigo) => {
+    playPopSound();
+    alternarCromoManual(codigo);
+    setAnimatingSticker(codigo);
+    setTimeout(() => setAnimatingSticker(null), 300); // Quita la clase tras 300ms
+  };
 
   const renderDigitalFlag = (sel) => {
     if (sel.id === 'FWC') return <span style={{ fontSize: '18px' }}>🏆</span>;
@@ -37,7 +71,7 @@ export default function Album({ perfil, alternarCromoManual }) {
                   let txt = numeroVisual === 1 ? '🛡️ Escudo' : `${sel.id} ${numeroVisual}`;
                   if (estado >= 2) txt += ` (x${estado - 1})`;
                   return (
-                    <button key={codigo} onClick={() => alternarCromoManual(codigo)} className="sticker-btn" style={{ background: bg }}>
+                    <button key={codigo} onClick={() => handleStickerClick(codigo)} className={`sticker-btn ${animatingSticker === codigo ? 'animate-pop' : ''}`} style={{ background: bg }}>
                       {txt}
                     </button>
                   );
