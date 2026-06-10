@@ -130,15 +130,22 @@ export default function App() {
     // Usamos el UID de Firebase Auth como ID de usuario. Es único y seguro.
     const userId = user.uid;
     const userRef = doc(db, "usuarios", userId);
-    const docSnap = await getDoc(userRef);
 
-    if (docSnap.exists()) {
-      setPerfil(docSnap.data()); // ☁️ Carga los datos existentes de la nube
-    } else {
-      // 🆕 Crea un perfil nuevo en la base de datos si es su primera vez
-      const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname, stickers: {} };
-      await setDoc(userRef, nuevoPerfil);
-      setPerfil(nuevoPerfil);
+    try {
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        setPerfil(docSnap.data()); // ☁️ Carga los datos existentes de la nube
+      } else {
+        // 🆕 Crea un perfil nuevo en la base de datos si es su primera vez
+        const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', stickers: {} };
+        await setDoc(userRef, nuevoPerfil);
+        setPerfil(nuevoPerfil);
+      }
+    } catch (error) {
+      console.warn("Error accediendo a la base de datos (quizás falta configuración o es invitado local):", error);
+      // Fallback local si Firebase falla o entramos como invitado
+      setPerfil({ id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', stickers: {} });
     }
   };
 

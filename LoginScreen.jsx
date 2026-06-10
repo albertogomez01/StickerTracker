@@ -5,7 +5,10 @@ import { auth, googleProvider } from './firebase';
 import { signInWithPopup } from 'firebase/auth';
 
 export default function LoginScreen({ onLogin }) {
+  const [errorMsg, setErrorMsg] = useState('');
+
   const handleGoogleLogin = async () => {
+    setErrorMsg('');
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -13,7 +16,17 @@ export default function LoginScreen({ onLogin }) {
       onLogin(user);
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error);
+      setErrorMsg(error.message);
     }
+  };
+
+  const handleGuestLogin = () => {
+    const guestUser = {
+      uid: 'invitado_' + Date.now(),
+      displayName: 'Invitado',
+      email: null
+    };
+    onLogin(guestUser);
   };
 
   return (
@@ -29,13 +42,19 @@ export default function LoginScreen({ onLogin }) {
         <h2>Mundial 2026</h2>
         <p>Gestiona tus cromos y coordina intercambios de forma inteligente.</p>
         
+        {errorMsg && <div style={{ color: '#DC2626', background: '#FEF2F2', padding: '10px', borderRadius: '8px', fontSize: '13px', marginBottom: '14px', border: '1px solid #FCA5A5' }}>Error: {errorMsg}</div>}
+
         <button type="button" onClick={handleGoogleLogin} className="btn-google">
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" />
           <span>Continuar con Google</span>
         </button>
 
+        <button type="button" onClick={handleGuestLogin} className="btn-secondary" style={{ width: '100%', marginTop: '10px' }}>
+          👤 Entrar como Invitado
+        </button>
+
         <div className="login-footer">
-          Al continuar, aceptas nuestros <a href="#">Términos de Servicio</a> y <a href="#">Política de Privacidad</a>.
+          Al continuar, aceptas nuestros <a href="#" onClick={(e) => { e.preventDefault(); alert("Los Términos de Servicio estarán disponibles próximamente."); }}>Términos de Servicio</a> y <a href="#" onClick={(e) => { e.preventDefault(); alert("La Política de Privacidad estará disponible próximamente."); }}>Política de Privacidad</a>.
         </div>
       </div>
     </div>
