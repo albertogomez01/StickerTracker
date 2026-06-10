@@ -1,0 +1,134 @@
+.app-container {
+  background: #F8FAFC;
+  min-height: 100vh;
+  font-family: system-ui, sans-serif;
+  color: #1E293B;
+  padding-bottom: 90px;
+  box-sizing: border-box;
+}
+
+.login-container {
+  min-height: 100vh;
+  background: #0F766E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, sans-serif;
+  padding: 16px;
+}
+
+.login-form {
+  background: #FFF;
+  padding: 30px 24px;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;
+}
+
+.input-field {
+  width: 100%;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1px solid #D1D5DB;
+  box-sizing: border-box;
+}
+
+.btn-primary {
+  background: #10B981;
+  color: #FFF;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: #FFF;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.card {
+  background: #FFF;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #E2E8F0;
+  margin-bottom: 14px;
+}
+
+.stats-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  flex: 1;
+  text-align: center;
+}
+
+.header {
+  background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  padding: 14px 20px;
+  color: #FFF;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #FFF;
+  border-top: 1px solid #E2E8F0;
+  padding: 10px 0;
+  display: flex;
+  justify-content: space-around;
+  z-index: 1000;
+}
+.content-wrapper {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 0 12px;
+}
+
+.footer-nav-btn {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #64748B;
+  cursor: pointer;
+  flex: 1;
+  padding: 4px 0;
+  font-family: system-ui, sans-serif;
+}
+
+.footer-nav-btn:focus {
+  outline: none;
+}
+
+.footer-nav-btn--active {
+  color: #10B981;
+}
+
+.footer-nav-btn__icon {
+  font-size: 16px;
+}
+
+.footer-nav-btn__label {
+  font-size: 10px;
+}
