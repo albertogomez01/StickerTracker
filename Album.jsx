@@ -51,13 +51,22 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
         for (let i = 0; i < sel.total; i++) {
           if ((perfil.stickers?.[`${sel.id}_${i.toString().padStart(2, '0')}`] || 0) >= 1) tEnFila++;
         }
+        const pctSel = Math.round((tEnFila / sel.total) * 100) || 0;
+
         return (
           <div key={sel.id} style={{ borderBottom: '1px solid #F1F5F9', padding: '14px 0' }}>
             <div onClick={() => setSeleccionExpandida(seleccionExpandida === sel.id ? null : sel.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', paddingRight: '16px' }}>
                 {renderDigitalFlag(sel)}
-                <span style={{ fontWeight: '700', fontSize: '13px', width: '40px' }}>{sel.id}</span>
-                <span style={{ fontSize: '13px' }}>{sel.nombre} <span style={{ color: '#94A3B8', fontSize: '11px' }}>({tEnFila}/{sel.total})</span></span>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                    <span><span style={{ fontWeight: '700', fontSize: '13px', width: '40px', display: 'inline-block' }}>{sel.id}</span> <span style={{ fontSize: '13px' }}>{sel.nombre}</span></span>
+                    <span style={{ color: '#94A3B8', fontSize: '11px' }}>{tEnFila}/{sel.total} ({pctSel}%)</span>
+                  </div>
+                  <div style={{ width: '100%', height: '4px', background: '#E2E8F0', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
+                    <div style={{ width: `${pctSel}%`, height: '100%', background: pctSel === 100 ? '#10B981' : '#3B82F6', transition: 'width 0.3s ease' }}></div>
+                  </div>
+                </div>
               </div>
               <span style={{ color: '#94A3B8', fontSize: '10px' }}>{seleccionExpandida === sel.id ? '▲' : '▼'}</span>
             </div>

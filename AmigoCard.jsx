@@ -1,0 +1,118 @@
+import React, { useState } from 'react';
+import { SELECCIONES } from './utils';
+import { generarImagenTrueque } from './canvasUtils';
+
+export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [faltantesInput, setFaltantesInput] = useState(amigo.rawFaltantes || '');
+  const [repetidosInput, setRepetidosInput] = useState(amigo.rawRepetidos || '');
+  const [exclusiones, setExclusiones] = useState({});
+
+  let fCount = 0; let tCount = 0; let rCount = 0;
+  SELECCIONES.forEach(s => {
+    for (let i = 0; i < s.total; i++) {
+      const status = amigo.stickers?.[`${s.id}_${i.toString().padStart(2, '0')}`] || 0;
+      if (status === 0) fCount++;
+      else if (status === 1) tCount++;
+      else if (status >= 2) { tCount++; rCount += (status - 1); }
+    }
+  });
+
+  const candidatosLeDoy = []; const candidatosElMeDa = [];
+  SELECCIONES.forEach(sel => {
+    for (let i = 0; i < sel.total; i++) {
+      const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+      const miEstado = perfil?.stickers?.[cod] || 0;
+      const amigoEstado = amigo.stickers?.[cod] || 0;
+      const tag = i === 0 ? `${sel.id} Escudo` : `${sel.id} ${i + 1}`;
+      if (miEstado >= 2 && amigoEstado === 0) candidatosLeDoy.push({ cod, tag });
+      if (amigoEstado >= 2 && miEstado === 0) candidatosElMeDa.push({ cod, tag });
+    }
+  });
+
+  const realesLeDoy = candidatosLeDoy.filter(c => !exclusiones[c.cod]);
+  const realesElMeDa = candidatosElMeDa.filter(c => !exclusiones[c.cod]);
+
+  const alternarExclusion = (cod) => setExclusiones(prev => ({ ...prev, [cod]: !prev[cod] }));
+
+  const handleGuardar = () => {
+    onGuardar(amigo.id, faltantesInput, repetidosInput);
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', background: '#E0F2FE', color: '#0369A1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{amigo.nickname.charAt(0).toUpperCase()}</div>
+          <span style={{ fontWeight: '700', fontSize: '16px' }}>{amigo.nickname}</span>
+        </div>
+        <span style={{ background: '#F1F5F9', color: '#475569', fontSize: '11px', padding: '4px 10px', borderRadius: '99px' }}>
+          {realesLeDoy.length > 0 || realesElMeDa.length > 0 ? 'Intercambio Listo' : 'Pocos en común'}
+        </span>
+      </div>
+
+      {isEditing ? (
+        <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '700', color: '#EF4444', display: 'block', marginBottom: '4px' }}>🔴 Cromos que le faltan a {amigo.nickname}</label>
+            <textarea value={faltantesInput} onChange={(e) => setFaltantesInput(e.target.value)} className="input-field" style={{ height: '80px' }} />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '700', color: '#F59E0B', display: 'block', marginBottom: '4px' }}>🟡 Cromos repetidos de {amigo.nickname}</label>
+            <textarea value={repetidosInput} onChange={(e) => setRepetidosInput(e.target.value)} className="input-field" style={{ height: '80px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={handleGuardar} className="btn-primary" style={{ background: '#059669' }}>✓ Guardar</button>
+            <button onClick={() => setIsEditing(false)} className="btn-primary" style={{ background: '#FFF', color: '#64748B', border: '1px solid #CBD5E1' }}>✕ Cancelar</button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', marginBottom: '14px' }}>
+            <div style={{ background: '#ECFDF5', borderRadius: '8px', padding: '6px' }}><div style={{ fontSize: '14px', fontWeight: 'bold', color: '#059669' }}>{tCount}</div><div style={{ fontSize: '10px', color: '#059669' }}>Tiene</div></div>
+            <div style={{ background: '#FEF2F2', borderRadius: '8px', padding: '6px' }}><div style={{ fontSize: '14px', fontWeight: 'bold', color: '#EF4444' }}>{fCount}</div><div style={{ fontSize: '10px', color: '#EF4444' }}>Le faltan</div></div>
+            <div style={{ background: '#FFFBEB', borderRadius: '8px', padding: '6px' }}><div style={{ fontSize: '14px', fontWeight: 'bold', color: '#D97706' }}>{rCount}</div><div style={{ fontSize: '10px', color: '#D97706' }}>Repetidos</div></div>
+          </div>
+          <div style={{ border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: '#F8FAFC', padding: '10px', fontWeight: 'bold', fontSize: '12px', borderBottom: '1px solid #E2E8F0', textAlign: 'center' }}>
+              <div style={{ color: '#059669' }}>🎁 Yo le doy ({realesLeDoy.length})</div>
+              <div style={{ color: '#D97706' }}>📥 Me da ({realesElMeDa.length})</div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '80px', maxHeight: '180px', overflowY: 'auto' }}>
+              <div style={{ borderRight: '1px solid #E2E8F0', padding: '6px', background: '#FFF' }}>
+                {candidatosLeDoy.length === 0 ? <div style={{ fontSize: '11px', color: '#94A3B8', textAlign: 'center', padding: '10px' }}>Ninguno</div> :
+                  candidatosLeDoy.map(c => {
+                    const desmarcado = exclusiones[c.cod];
+                    return (
+                      <div key={c.cod} onClick={() => alternarExclusion(c.cod)} className="trade-sticker" style={{ background: desmarcado ? '#F1F5F9' : '#EF4444', color: desmarcado ? '#94A3B8' : '#FFF', textDecoration: desmarcado ? 'line-through' : 'none' }}>
+                        {desmarcado ? '❌' : '✓'} {c.tag}
+                      </div>
+                    );
+                  })
+                }
+              </div>
+              <div style={{ padding: '6px', background: '#FFF' }}>
+                {candidatosElMeDa.length === 0 ? <div style={{ fontSize: '11px', color: '#94A3B8', textAlign: 'center', padding: '10px' }}>Ninguno</div> :
+                  candidatosElMeDa.map(c => {
+                    const desmarcado = exclusiones[c.cod];
+                    return (
+                      <div key={c.cod} onClick={() => alternarExclusion(c.cod)} className="trade-sticker" style={{ background: desmarcado ? '#F1F5F9' : '#F59E0B', color: desmarcado ? '#94A3B8' : '#FFF', textDecoration: desmarcado ? 'line-through' : 'none' }}>
+                        {desmarcado ? '❌' : '➡️'} {c.tag}
+                      </div>
+                    );
+                  })
+                }
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button onClick={() => { setFaltantesInput(amigo.rawFaltantes || ''); setRepetidosInput(amigo.rawRepetidos || ''); setIsEditing(true); }} className="btn-secondary" style={{ flex: '1 1 30%' }}>✍️ Editar</button>
+            <button onClick={() => generarImagenTrueque(perfil?.nickname || 'Yo', amigo.nickname, realesLeDoy.map(x=>x.tag), realesElMeDa.map(x=>x.tag))} className="btn-primary" style={{ flex: '1 1 50%' }}>🖼️ Generar imagen</button>
+            <button onClick={() => onEliminar(amigo.id)} className="btn-danger" style={{ flex: '1 1 100%' }}>🗑️ Eliminar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

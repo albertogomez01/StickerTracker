@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import Confetti from 'react-confetti';
 import { SELECCIONES, TOTAL_STICKERS, parsearTextoAStickers } from './utils';
@@ -8,6 +8,9 @@ import Footer from './Footer';
 import Album from './Album';
 import Importar from './Importar';
 import Intercambios from './Intercambios';
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 
 export default function App() {
   const [seccionActual, setSeccionActual] = useState('intercambios');
@@ -32,6 +35,10 @@ export default function App() {
     try {
       if (perfil) {
         localStorage.setItem('panini_perfil', JSON.stringify(perfil));
+        // Guardado automático en la nube cada vez que cambia el perfil
+        if (perfil.id) {
+          setDoc(doc(db, "usuarios", perfil.id), perfil).catch(e => console.error("Error nube:", e));
+        }
       } else {
         // Si el perfil es null (logout), lo removemos
         localStorage.removeItem('panini_perfil');
@@ -49,15 +56,28 @@ export default function App() {
     });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm("¿Seguro que quieres cerrar sesión? Se borrarán tus datos guardados.")) {
+      try { await signOut(auth); } catch (e) { console.error("Error al cerrar sesión:", e); }
       setPerfil(null);
       localStorage.removeItem('panini_amigos');
     }
   };
 
-  const handleLogin = (user) => {
-    setPerfil({ id: 'dev_user', email: user.email, nickname: user.nickname, stickers: {} });
+  const handleLogin = async (user) => {
+    // Usamos el UID de Firebase Auth como ID de usuario. Es único y seguro.
+    const userId = user.uid;
+    const userRef = doc(db, "usuarios", userId);
+    const docSnap = await getDoc(userRef);
+
+    if (docSnap.exists()) {
+      setPerfil(docSnap.data()); // ☁️ Carga los datos existentes de la nube
+    } else {
+      // 🆕 Crea un perfil nuevo en la base de datos si es su primera vez
+      const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname, stickers: {} };
+      await setDoc(userRef, nuevoPerfil);
+      setPerfil(nuevoPerfil);
+    }
   };
 
   const alternarCromoManual = (codigo) => {
@@ -78,28 +98,20 @@ export default function App() {
   };
 
   // Contadores Propios
-
-  let tienesCount = 0; let repetidasCount = 0; let faltanCount = 0;
-
-  SELECCIONES.forEach(sel => {
-
-    for (let i = 0; i < sel.total; i++) {
-
-      const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
-
-      const v = perfil?.stickers?.[cod] || 0;
-
-      if (v === 0) faltanCount++;
-
-      else if (v === 1) tienesCount++;
-
-      else if (v >= 2) { tienesCount++; repetidasCount += (v - 1); }
-
-    }
-
-  });
-
-  const pctGlobal = Math.round((tienesCount / TOTAL_STICKERS) * 100) || 0;
+  const { tienesCount, repetidasCount, faltanCount, pctGlobal } = useMemo(() => {
+    let tCount = 0; let rCount = 0; let fCount = 0;
+    SELECCIONES.forEach(sel => {
+      for (let i = 0; i < sel.total; i++) {
+        const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+        const v = perfil?.stickers?.[cod] || 0;
+        if (v === 0) fCount++;
+        else if (v === 1) tCount++;
+        else if (v >= 2) { tCount++; rCount += (v - 1); }
+      }
+    });
+    const pct = Math.round((tCount / TOTAL_STICKERS) * 100) || 0;
+    return { tienesCount: tCount, repetidasCount: rCount, faltanCount: fCount, pctGlobal: pct };
+  }, [perfil?.stickers]);
 
   useEffect(() => {
     if (pctGlobal === 100) {
@@ -133,7 +145,7 @@ export default function App() {
       </div>
       <div className="content-wrapper">
         {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} />}
-        {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} />}
+        {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} />}
         {seccionActual === 'intercambios' && <Intercambios perfil={perfil} />}
       </div>
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
