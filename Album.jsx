@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { SELECCIONES } from './utils';
+import { ALBUMS } from './utils';
 
 let globalAudioCtx = null;
 
-export default function Album({ perfil, alternarCromoManual, isMuted }) {
+export default function Album({ perfil, alternarCromoManual, isMuted, albumActivo }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'faltantes', 'repetidos'
@@ -49,11 +49,12 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
   const renderDigitalFlag = (sel) => {
     if (sel.id === 'FWC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Copa</span>;
     if (sel.id === 'CC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>CC</span>;
-    return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
+    if (sel.flagCode) return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
+    return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⚽</span>;
   };
 
   // Filtramos las selecciones para ocultar los países que no tienen cromos que coincidan
-  const seleccionesFiltradas = SELECCIONES.filter(sel => {
+  const seleccionesFiltradas = (ALBUMS[albumActivo] || ALBUMS['mundial_2026']).selecciones.filter(sel => {
     if (busquedaAlbum.trim() !== '') {
       const termino = busquedaAlbum.toLowerCase();
       if (!sel.nombre.toLowerCase().includes(termino) && !sel.id.toLowerCase().includes(termino)) {

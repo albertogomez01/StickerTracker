@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import Confetti from 'react-confetti';
-import { SELECCIONES, TOTAL_STICKERS, parsearTextoAStickers, LOGO_URL } from './utils';
+import { ALBUMS, parsearTextoAStickers, LOGO_URL } from './utils';
 import LoginScreen from './LoginScreen';
 import Header from './Header';
 import Footer from './Footer';
@@ -20,6 +20,7 @@ export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [seccionActual, setSeccionActual] = useState('intercambios');
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [albumActivo, setAlbumActivo] = useState(() => localStorage.getItem('panini_album') || 'mundial_2026');
   const [perfil, setPerfil] = useState(() => {
     try {
       const guardado = localStorage.getItem('panini_perfil');
@@ -43,6 +44,10 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('panini_theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('panini_album', albumActivo);
+  }, [albumActivo]);
 
   useEffect(() => {
     // Pedir permiso para enviar notificaciones web (si el navegador lo soporta)
@@ -224,7 +229,7 @@ export default function App() {
 
   const procesarImportadorTexto = (texto, tipo) => {
     setPerfil(prev => {
-      const nuevaCopia = parsearTextoAStickers(texto, tipo, prev.stickers);
+      const nuevaCopia = parsearTextoAStickers(texto, tipo, albumActivo, prev.stickers);
       const nuevoPerfil = { ...prev, stickers: nuevaCopia };
       // Guardamos en la nube inmediatamente al importar
       if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
@@ -236,7 +241,8 @@ export default function App() {
   // Contadores Propios
   const { tienesCount, repetidasCount, faltanCount, pctGlobal } = useMemo(() => {
     let tCount = 0; let rCount = 0; let fCount = 0;
-    SELECCIONES.forEach(sel => {
+    const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
+    albumData.selecciones.forEach(sel => {
       for (let i = 0; i < sel.total; i++) {
         const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
         const v = perfil?.stickers?.[cod] || 0;
@@ -245,9 +251,9 @@ export default function App() {
         else if (v >= 2) { tCount++; rCount += (v - 1); }
       }
     });
-    const pct = Math.round((tCount / TOTAL_STICKERS) * 100) || 0;
+    const pct = Math.round((tCount / albumData.totalStickers) * 100) || 0;
     return { tienesCount: tCount, repetidasCount: rCount, faltanCount: fCount, pctGlobal: pct };
-  }, [perfil?.stickers]);
+  }, [perfil?.stickers, albumActivo]);
 
   useEffect(() => {
     if (pctGlobal === 100) {
@@ -278,7 +284,7 @@ export default function App() {
   return (
     <div className="app-container">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
-      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} />
+      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} />
       
       {installPrompt && (
         <div style={{ background: 'var(--accent-primary)', color: '#FFF', padding: '12px', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '16px 12px 0 12px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
@@ -291,8 +297,8 @@ export default function App() {
         <div className="card stats-card-modern">
           <div className="stats-header">
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-primary)' }}>Progreso del Álbum</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{tienesCount} de {TOTAL_STICKERS} cromos</span>
+              <span style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-primary)' }}>Progreso de {ALBUMS[albumActivo]?.nombre || 'Mundial 2026'}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{tienesCount} de {ALBUMS[albumActivo]?.totalStickers || 992} cromos</span>
             </div>
             <span className="stats-pct">{pctGlobal}%</span>
           </div>
@@ -305,11 +311,11 @@ export default function App() {
         </div>
       </div>
       <div className="content-wrapper">
-        {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} />}
-        {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} />}
-        {seccionActual === 'intercambios' && <Intercambios perfil={perfil} />}
-        {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} />}
-        {seccionActual === 'stats' && <Estadisticas />}
+        {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} albumActivo={albumActivo} />}
+        {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
+        {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} />}
+        {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} />}
+        {seccionActual === 'stats' && <Estadisticas albumActivo={albumActivo} />}
       </div>
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
       

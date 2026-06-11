@@ -179,13 +179,11 @@ export const ALBUMS = {
 export const TOTAL_STICKERS = 992;
 export const LOGO_URL = "https://media.base44.com/images/public/6a2595c43f4f5e19a4497bd1/5bd12f067_logo.png";
 
-export const parsearTextoAStickers = (texto, tipo, baseStickers = {}) => {
 export const parsearTextoAStickers = (texto, tipo, albumId, baseStickers = {}) => {
   let copia = { ...baseStickers };
   const seleccionesAlbum = ALBUMS[albumId].selecciones;
 
   if (tipo === 'faltantes') {
-    SELECCIONES.forEach(sel => {
     seleccionesAlbum.forEach(sel => {
       for (let i = 0; i < sel.total; i++) {
         const codCromo = `${sel.id}_${i.toString().padStart(2, '0')}`;
@@ -201,7 +199,6 @@ export const parsearTextoAStickers = (texto, tipo, albumId, baseStickers = {}) =
     let idFila = nombreFila.trim().toUpperCase();
     if (idFila === 'ZAF' || idFila === 'RSA') idFila = 'RSA';
 
-    const seleccionValida = SELECCIONES.find(s => s.id === idFila || s.alias === idFila);
     const seleccionValida = seleccionesAlbum.find(s => s.id === idFila || s.alias === idFila);
     if (!seleccionValida) return;
    

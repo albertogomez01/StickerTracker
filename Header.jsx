@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import './App.css';
-import { LOGO_URL } from './utils';
+import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme, cambiarApodo }) {
+export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, albumActivo, setAlbumActivo }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -43,8 +43,12 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
       <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
         <img src={LOGO_URL} alt="Logo" className={`header-logo ${isLogoAnimating ? 'logo-spin' : ''}`} />
         <div>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Mundial 2026</h1>
-          <span style={{ opacity: 0.85, fontSize: '11px' }}>Gestor Cromos</span>
+          <select value={albumActivo} onChange={(e) => setAlbumActivo(e.target.value)} style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '18px', fontWeight: 'bold', appearance: 'none', cursor: 'pointer', outline: 'none', margin: 0, padding: 0 }}>
+            {Object.values(ALBUMS).map(album => (
+              <option key={album.id} value={album.id} style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>{album.nombre}</option>
+            ))}
+          </select>
+          <div style={{ opacity: 0.85, fontSize: '11px', marginTop: '-2px' }}>Gestor Cromos ▾</div>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
