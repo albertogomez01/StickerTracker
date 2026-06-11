@@ -6,8 +6,8 @@ import LoginScreen from './LoginScreen';
 import Header from './Header';
 import Footer from './Footer';
 import { db, auth } from './firebase';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { signOut, onAuthStateChanged, deleteUser } from 'firebase/auth';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -259,6 +259,40 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
+  const handleEliminarCuenta = async () => {
+    if (window.confirm("⚠️ ¿Estás completamente seguro de que quieres eliminar tu cuenta? Esta acción borrará todos tus cromos y datos guardados, y NO se puede deshacer.")) {
+      try {
+        const user = auth.currentUser;
+        if (!user) return toast.error("No hay sesión activa.");
+
+        // 1. Borramos los datos de las colecciones principales del usuario en todos los álbumes
+        const colecciones = ['usuarios', 'notificaciones'];
+        Object.keys(ALBUMS).forEach(albumId => {
+          const sufijo = albumId === 'mundial_2026' ? '' : `_${albumId}`;
+          colecciones.push(`mercado${sufijo}`);
+          colecciones.push(`amigos${sufijo}`);
+        });
+
+        await Promise.all(colecciones.map(col => deleteDoc(doc(db, col, user.uid)).catch(() => {})));
+
+        // 2. Borramos la cuenta de autenticación en Firebase
+        await deleteUser(user);
+
+        // 3. Limpiamos la app localmente
+        setPerfil(null);
+        localStorage.clear();
+        toast.success("Tu cuenta ha sido eliminada correctamente.");
+      } catch (error) {
+        console.error("Error al eliminar la cuenta:", error);
+        if (error.code === 'auth/requires-recent-login') {
+          toast.error("Por seguridad, cierra sesión y vuelve a entrar antes de eliminar tu cuenta.");
+        } else {
+          toast.error("Hubo un error al eliminar tu cuenta.");
+        }
+      }
+    }
+  };
+
   const handleLogout = async () => {
     if (window.confirm("¿Seguro que quieres cerrar sesión? Se borrarán tus datos guardados.")) {
       try { await signOut(auth); } catch (e) { console.error("Error al cerrar sesión:", e); }
@@ -359,7 +393,7 @@ export default function App() {
   return (
     <div className="app-container">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
-      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} />
+      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} />
       
       {installPrompt && (
         <div style={{ background: 'var(--accent-primary)', color: '#FFF', padding: '12px', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '16px 12px 0 12px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>

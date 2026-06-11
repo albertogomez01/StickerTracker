@@ -3,7 +3,7 @@ import './App.css';
 import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo }) {
+export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
@@ -118,6 +118,10 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <button onClick={() => { setShowDropdown(false); onLogout(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
                 Cerrar sesión
+              </button>
+              <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
+              <button onClick={() => { setShowDropdown(false); onEliminarCuenta(); }} style={{ background: 'transparent', border: 'none', color: '#DC2626', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
+                Eliminar cuenta
               </button>
             </div>
           )}
