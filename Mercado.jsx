@@ -1,8 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, getDoc, query, where, onSnapshot, limit, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, getDoc, query, where, onSnapshot, limit, orderBy, addDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { SELECCIONES } from './utils';
 import { toast } from 'react-hot-toast';
+
+const REGIONES_ESPANA = {
+  "Andalucía": ["Sevilla", "Málaga", "Córdoba", "Granada", "Almería", "Jerez de la Frontera", "Cádiz", "Huelva", "Jaén"],
+  "Aragón": ["Zaragoza", "Huesca", "Teruel"],
+  "Asturias": ["Gijón", "Oviedo", "Avilés"],
+  "Baleares": ["Palma de Mallorca", "Ibiza", "Mahón"],
+  "Canarias": ["Las Palmas de Gran Canaria", "Santa Cruz de Tenerife", "La Laguna"],
+  "Cantabria": ["Santander", "Torrelavega"],
+  "Castilla y León": ["Valladolid", "Burgos", "Salamanca", "León", "Palencia", "Zamora"],
+  "Castilla-La Mancha": ["Albacete", "Guadalajara", "Toledo", "Ciudad Real", "Cuenca"],
+  "Cataluña": ["Barcelona", "L'Hospitalet de Llobregat", "Badalona", "Terrassa", "Sabadell", "Tarragona", "Lleida", "Girona"],
+  "Comunidad de Madrid": ["Madrid", "Móstoles", "Alcalá de Henares", "Fuenlabrada", "Leganés", "Getafe", "Alcorcón"],
+  "Comunidad Valenciana": ["Valencia", "Alicante", "Elche", "Castellón de la Plana", "Torrevieja"],
+  "Extremadura": ["Badajoz", "Cáceres", "Mérida"],
+  "Galicia": ["Vigo", "A Coruña", "Ourense", "Lugo", "Santiago de Compostela"],
+  "La Rioja": ["Logroño"],
+  "Murcia": ["Murcia", "Cartagena", "Lorca"],
+  "Navarra": ["Pamplona"],
+  "País Vasco": ["Bilbao", "Vitoria-Gasteiz", "San Sebastián", "Barakaldo"]
+};
 
 export default function Mercado({ perfil, setSeccionActual }) {
   const [usuariosMercado, setUsuariosMercado] = useState([]);
@@ -12,6 +32,11 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState('explorar');
   const [busquedaMercado, setBusquedaMercado] = useState('');
+  const [comunidadActiva, setComunidadActiva] = useState('');
+  const [ciudadActiva, setCiudadActiva] = useState('');
+  const [quedadas, setQuedadas] = useState([]);
+  const [showFormQuedada, setShowFormQuedada] = useState(false);
+  const [nuevaQuedada, setNuevaQuedada] = useState({ titulo: '', lugar: '', fecha: '' });
 
   useEffect(() => {
     if (!perfil?.id) return;
@@ -36,6 +61,21 @@ export default function Mercado({ perfil, setSeccionActual }) {
     });
     return () => { unsub(); unsubEnviadas(); };
   }, [perfil?.id]);
+
+  useEffect(() => {
+    if (!ciudadActiva) {
+      setQuedadas([]);
+      return;
+    }
+    const qQuedadas = query(collection(db, 'quedadas'), where('ciudad', '==', ciudadActiva));
+    const unsubQuedadas = onSnapshot(qQuedadas, (snap) => {
+      const list = [];
+      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+      list.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+      setQuedadas(list);
+    });
+    return () => unsubQuedadas();
+  }, [ciudadActiva]);
 
   const togglePublicar = async () => {
     setLoading(true);
@@ -209,6 +249,43 @@ export default function Mercado({ perfil, setSeccionActual }) {
     }
   };
 
+  const handleCrearQuedada = async (e) => {
+    e.preventDefault();
+    if (!nuevaQuedada.titulo || !nuevaQuedada.lugar || !nuevaQuedada.fecha) return toast.error("Rellena todos los campos.");
+    try {
+      await addDoc(collection(db, 'quedadas'), {
+        ciudad: ciudadActiva,
+        titulo: nuevaQuedada.titulo,
+        lugar: nuevaQuedada.lugar,
+        fecha: nuevaQuedada.fecha,
+        creador: perfil.id,
+        creadorNombre: perfil.nickname,
+        asistentes: [perfil.id],
+        timestamp: Date.now()
+      });
+      setShowFormQuedada(false);
+      setNuevaQuedada({ titulo: '', lugar: '', fecha: '' });
+      toast.success("Quedada creada correctamente.");
+    } catch(err) {
+      console.error(err);
+      toast.error("Error al crear la quedada.");
+    }
+  };
+
+  const toggleAsistencia = async (quedada) => {
+    const ref = doc(db, 'quedadas', quedada.id);
+    const voy = quedada.asistentes?.includes(perfil.id);
+    try {
+      await updateDoc(ref, {
+        asistentes: voy ? arrayRemove(perfil.id) : arrayUnion(perfil.id)
+      });
+      toast.success(voy ? "Te has desapuntado de la quedada." : "Te has apuntado a la quedada.");
+    } catch(err) {
+      console.error(err);
+      toast.error("Error al actualizar la asistencia.");
+    }
+  };
+
   const usuariosFiltrados = usuariosMercado.filter(u => u.nickname.toLowerCase().includes(busquedaMercado.toLowerCase()));
 
   return (
@@ -219,6 +296,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
           Buzón
           {solicitudes.length > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#EF4444', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold' }}>{solicitudes.length}</span>}
         </button>
+        <button onClick={() => setTab('quedadas')} className="btn-secondary" style={{ flex: 1, background: tab === 'quedadas' ? 'var(--accent-primary)' : '', color: tab === 'quedadas' ? '#FFF' : '', borderColor: tab === 'quedadas' ? 'var(--accent-primary)' : '' }}>Quedadas</button>
       </div>
 
       {tab === 'explorar' && (
@@ -293,6 +371,76 @@ export default function Mercado({ perfil, setSeccionActual }) {
                 </div>
               </div>
             ))
+          )}
+        </div>
+      )}
+
+      {tab === 'quedadas' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="card">
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Grupos y Quedadas</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', marginTop: 0 }}>Organiza o únete a intercambios presenciales en tu ciudad con otros coleccionistas de tu zona.</p>
+            
+            <select className="input-field" value={comunidadActiva} onChange={e => { setComunidadActiva(e.target.value); setCiudadActiva(''); }} style={{ marginBottom: '10px', padding: '10px 14px' }}>
+              <option value="">Selecciona tu Comunidad Autónoma...</option>
+              {Object.keys(REGIONES_ESPANA).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            {comunidadActiva && (
+              <select className="input-field" value={ciudadActiva} onChange={e => setCiudadActiva(e.target.value)} style={{ padding: '10px 14px' }}>
+                <option value="">Selecciona tu Ciudad...</option>
+                {REGIONES_ESPANA[comunidadActiva].map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+          </div>
+
+          {ciudadActiva && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>Eventos en {ciudadActiva}</h4>
+                <button onClick={() => setShowFormQuedada(!showFormQuedada)} className="btn-primary" style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px' }}>
+                  {showFormQuedada ? 'Cancelar' : 'Nueva Quedada'}
+                </button>
+              </div>
+
+              {showFormQuedada && (
+                <form onSubmit={handleCrearQuedada} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input type="text" placeholder="Título (ej: Intercambio en la Plaza)" value={nuevaQuedada.titulo} onChange={e => setNuevaQuedada({...nuevaQuedada, titulo: e.target.value})} className="input-field" style={{ padding: '10px 14px' }} required />
+                  <input type="text" placeholder="Lugar exacto" value={nuevaQuedada.lugar} onChange={e => setNuevaQuedada({...nuevaQuedada, lugar: e.target.value})} className="input-field" style={{ padding: '10px 14px' }} required />
+                  <input type="datetime-local" value={nuevaQuedada.fecha} onChange={e => setNuevaQuedada({...nuevaQuedada, fecha: e.target.value})} className="input-field" style={{ padding: '10px 14px' }} required />
+                  <button type="submit" className="btn-primary" style={{ marginTop: '4px' }}>Publicar</button>
+                </form>
+              )}
+
+              {quedadas.length === 0 ? (
+                <div className="card" style={{ textAlign: 'center', color: '#94A3B8', fontSize: '14px', padding: '20px' }}>No hay quedadas programadas en {ciudadActiva} todavía.</div>
+              ) : (
+                quedadas.map(q => {
+                  const voy = q.asistentes?.includes(perfil.id);
+                  const totalAsistentes = q.asistentes?.length || 0;
+                  return (
+                    <div key={q.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>{q.titulo}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 'bold', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 8px', borderRadius: '6px' }}>
+                          {new Date(q.fecha).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' })}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Lugar: {q.lugar}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Organiza: @{q.creadorNombre}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', borderTop: '1px solid var(--border-primary)', paddingTop: '10px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                          Asistentes: {totalAsistentes}
+                        </div>
+                        <button onClick={() => toggleAsistencia(q)} className={voy ? "btn-danger" : "btn-primary"} style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '8px' }}>
+                          {voy ? 'No voy' : 'Me apunto'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </>
           )}
         </div>
       )}
