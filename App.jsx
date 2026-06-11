@@ -98,7 +98,7 @@ export default function App() {
         if (noLeidas.length > 0) {
           // Lanzar notificación nativa por cada aviso no leído
           if ("Notification" in window && Notification.permission === "granted") {
-            noLeidas.forEach(n => new Notification("Nuevo Intercambio 🔄", { body: n.text, icon: '/pwa-192x192.png' }));
+            noLeidas.forEach(n => new Notification("Nuevo Intercambio 🔄", { body: n.text, icon: 'https://media.base44.com/images/public/6a2595c43f4f5e19a4497bd1/5bd12f067_logo.png' }));
           } else {
             // Fallback: usar un alert estándar si no dio permisos
             alert("🔔 Nueva notificación:\n" + noLeidas.map(n => n.text).join('\n'));
