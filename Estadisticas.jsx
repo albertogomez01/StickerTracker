@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { db } from './firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { SELECCIONES } from './utils';
 import { toast } from 'react-hot-toast';
 
@@ -12,7 +12,8 @@ export default function Estadisticas() {
     setLoading(true);
     setStats(null);
     try {
-      const mercadoSnapshot = await getDocs(collection(db, 'mercado'));
+      const qStats = query(collection(db, 'mercado'), orderBy('timestamp', 'desc'), limit(100));
+      const mercadoSnapshot = await getDocs(qStats);
       const totalUsuarios = mercadoSnapshot.size;
       
       if (totalUsuarios < 2) {
@@ -60,12 +61,12 @@ export default function Estadisticas() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div className="card">
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>📊 Estadísticas de la Comunidad</h3>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Estadísticas de la Comunidad</h3>
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', marginTop: 0 }}>
           Descubre cuáles son los cromos más raros y los más comunes entre todos los usuarios que han publicado su perfil en el mercado.
         </p>
         <button onClick={calcularEstadisticas} className="btn-primary" style={{ width: '100%' }} disabled={loading}>
-          {loading ? '⏳ Calculando...' : 'Analizar Cromos de la Comunidad'}
+          {loading ? 'Calculando...' : 'Analizar Cromos de la Comunidad'}
         </button>
       </div>
 
@@ -75,8 +76,8 @@ export default function Estadisticas() {
             Estadísticas basadas en <strong>{stats.totalUsuarios}</strong> perfiles públicos.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            <div className="card" style={{margin: 0}}><h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#EF4444' }}>🔥 Top 10 Más Difíciles</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>{stats.masDificiles.map(s => (<div key={s.codigo} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}><span style={{ fontWeight: '600' }}>{s.tag}</span><span style={{ background: '#FEF2F2', color: '#DC2626', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 'bold' }}>{s.porcentaje.toFixed(1)}%</span></div>))}</div></div>
-            <div className="card" style={{margin: 0}}><h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#10B981' }}>✅ Top 10 Más Comunes</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>{stats.masComunes.map(s => (<div key={s.codigo} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}><span style={{ fontWeight: '600' }}>{s.tag}</span><span style={{ background: '#ECFDF5', color: '#059669', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 'bold' }}>{s.porcentaje.toFixed(1)}%</span></div>))}</div></div>
+            <div className="card" style={{margin: 0}}><h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#EF4444' }}>Top 10 Más Difíciles</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>{stats.masDificiles.map(s => (<div key={s.codigo} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}><span style={{ fontWeight: '600' }}>{s.tag}</span><span style={{ background: '#FEF2F2', color: '#DC2626', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 'bold' }}>{s.porcentaje.toFixed(1)}%</span></div>))}</div></div>
+            <div className="card" style={{margin: 0}}><h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#10B981' }}>Top 10 Más Comunes</h4><div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>{stats.masComunes.map(s => (<div key={s.codigo} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}><span style={{ fontWeight: '600' }}>{s.tag}</span><span style={{ background: '#ECFDF5', color: '#059669', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 'bold' }}>{s.porcentaje.toFixed(1)}%</span></div>))}</div></div>
           </div>
         </>
       )}

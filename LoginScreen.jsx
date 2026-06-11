@@ -55,7 +55,7 @@ export default function LoginScreen({ onLogin }) {
 
         <button type="button" onClick={handleGoogleLogin} className="btn-google" disabled={isLoading} style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'wait' : 'pointer' }}>
           {isLoading ? (
-            <span>⏳ Cargando tu álbum...</span>
+            <span>Cargando tu álbum...</span>
           ) : (
             <>
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" />
@@ -65,11 +65,11 @@ export default function LoginScreen({ onLogin }) {
         </button>
 
         <button type="button" onClick={handleGuestLogin} className="btn-secondary" disabled={isLoading} style={{ width: '100%', marginTop: '10px', opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'wait' : 'pointer' }}>
-          {isLoading ? '⏳ Entrando...' : '👤 Entrar como Invitado'}
+          {isLoading ? 'Entrando...' : 'Entrar como Invitado'}
         </button>
 
         <div className="login-footer">
-      Al continuar, aceptas nuestros <a href="#" onClick={(e) => { e.preventDefault(); toast("Los Términos de Servicio estarán disponibles próximamente.", { icon: '📄' }); }}>Términos de Servicio</a> y <a href="#" onClick={(e) => { e.preventDefault(); toast("La Política de Privacidad estará disponible próximamente.", { icon: '🛡️' }); }}>Política de Privacidad</a>.
+      Al continuar, aceptas nuestros <a href="#" onClick={(e) => { e.preventDefault(); toast("Los Términos de Servicio estarán disponibles próximamente."); }}>Términos de Servicio</a> y <a href="#" onClick={(e) => { e.preventDefault(); toast("La Política de Privacidad estará disponible próximamente."); }}>Política de Privacidad</a>.
         </div>
       </div>
     </div>

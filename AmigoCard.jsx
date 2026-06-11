@@ -68,15 +68,15 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
       {isEditing ? (
         <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
           <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '700', color: '#EF4444', display: 'block', marginBottom: '4px' }}>🔴 Cromos que le faltan a {amigo.nickname}</label>
+            <label style={{ fontSize: '13px', fontWeight: '700', color: '#EF4444', display: 'block', marginBottom: '4px' }}>Faltantes de {amigo.nickname}</label>
             <textarea value={faltantesInput} onChange={(e) => setFaltantesInput(e.target.value)} className="input-field" style={{ height: '80px' }} />
           </div>
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '700', color: '#F59E0B', display: 'block', marginBottom: '4px' }}>🟡 Cromos repetidos de {amigo.nickname}</label>
+            <label style={{ fontSize: '13px', fontWeight: '700', color: '#F59E0B', display: 'block', marginBottom: '4px' }}>Repetidos de {amigo.nickname}</label>
             <textarea value={repetidosInput} onChange={(e) => setRepetidosInput(e.target.value)} className="input-field" style={{ height: '80px' }} />
           </div>
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>🎨 Color de Avatar</label>
+            <label style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>Color de Avatar</label>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {AVATAR_COLORS.map((color, idx) => (
                 <div
@@ -96,14 +96,14 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
                     boxSizing: 'border-box'
                   }}
                 >
-                  {colorInput.bg === color.bg ? '✓' : ''}
+                {colorInput.bg === color.bg ? 'V' : ''}
                 </div>
               ))}
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={handleGuardar} className="btn-primary" style={{ background: '#059669' }}>✓ Guardar</button>
-            <button onClick={() => setIsEditing(false)} className="btn-primary" style={{ background: '#FFF', color: '#64748B', border: '1px solid #CBD5E1' }}>✕ Cancelar</button>
+            <button onClick={handleGuardar} className="btn-primary" style={{ background: '#059669' }}>Guardar</button>
+            <button onClick={() => setIsEditing(false)} className="btn-primary" style={{ background: '#FFF', color: '#64748B', border: '1px solid #CBD5E1' }}>Cancelar</button>
           </div>
         </div>
       ) : (
@@ -115,8 +115,8 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
           </div>
           <div style={{ border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: '#F8FAFC', padding: '10px', fontWeight: 'bold', fontSize: '12px', borderBottom: '1px solid #E2E8F0', textAlign: 'center' }}>
-              <div style={{ color: '#059669' }}>🎁 Yo le doy ({realesLeDoy.length})</div>
-              <div style={{ color: '#D97706' }}>📥 Me da ({realesElMeDa.length})</div>
+              <div style={{ color: '#059669' }}>Yo le doy ({realesLeDoy.length})</div>
+              <div style={{ color: '#D97706' }}>Me da ({realesElMeDa.length})</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '80px', maxHeight: '180px', overflowY: 'auto' }}>
               <div style={{ borderRight: '1px solid #E2E8F0', padding: '6px', background: '#FFF' }}>
@@ -125,7 +125,7 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
                     const desmarcado = exclusiones[c.cod];
                     return (
                       <div key={c.cod} onClick={() => alternarExclusion(c.cod)} className="trade-sticker" style={{ background: desmarcado ? '#F1F5F9' : '#EF4444', color: desmarcado ? '#94A3B8' : '#FFF', textDecoration: desmarcado ? 'line-through' : 'none' }}>
-                        {desmarcado ? '❌' : '✓'} {c.tag}
+                        {desmarcado ? 'X' : 'V'} {c.tag}
                       </div>
                     );
                   })
@@ -137,7 +137,7 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
                     const desmarcado = exclusiones[c.cod];
                     return (
                       <div key={c.cod} onClick={() => alternarExclusion(c.cod)} className="trade-sticker" style={{ background: desmarcado ? '#F1F5F9' : '#F59E0B', color: desmarcado ? '#94A3B8' : '#FFF', textDecoration: desmarcado ? 'line-through' : 'none' }}>
-                        {desmarcado ? '❌' : '➡️'} {c.tag}
+                        {desmarcado ? 'X' : '->'} {c.tag}
                       </div>
                     );
                   })
@@ -146,9 +146,9 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button onClick={() => { setFaltantesInput(amigo.rawFaltantes || ''); setRepetidosInput(amigo.rawRepetidos || ''); setColorInput(amigo.avatarColor || AVATAR_COLORS[0]); setIsEditing(true); }} className="btn-secondary" style={{ flex: '1 1 30%' }}>✍️ Editar</button>
-            <button onClick={() => generarImagenTrueque(perfil?.nickname || 'Yo', amigo.nickname, realesLeDoy.map(x=>x.tag), realesElMeDa.map(x=>x.tag))} className="btn-primary" style={{ flex: '1 1 50%' }}>🖼️ Compartir imagen</button>
-            <button onClick={() => onEliminar(amigo.id)} className="btn-danger" style={{ flex: '1 1 100%' }}>🗑️ Eliminar</button>
+            <button onClick={() => { setFaltantesInput(amigo.rawFaltantes || ''); setRepetidosInput(amigo.rawRepetidos || ''); setColorInput(amigo.avatarColor || AVATAR_COLORS[0]); setIsEditing(true); }} className="btn-secondary" style={{ flex: '1 1 30%' }}>Editar</button>
+            <button onClick={() => generarImagenTrueque(perfil?.nickname || 'Yo', amigo.nickname, realesLeDoy.map(x=>x.tag), realesElMeDa.map(x=>x.tag))} className="btn-primary" style={{ flex: '1 1 50%' }}>Compartir</button>
+            <button onClick={() => onEliminar(amigo.id)} className="btn-danger" style={{ flex: '1 1 100%' }}>Eliminar</button>
           </div>
         </div>
       )}

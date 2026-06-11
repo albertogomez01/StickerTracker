@@ -109,16 +109,16 @@ export default function Intercambios({ perfil }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div className="card">
-        <label style={{ fontSize: '14px', fontWeight: '700', display: 'block', marginBottom: '8px' }}>🔍 Buscar usuario por apodo</label>
+        <label style={{ fontSize: '14px', fontWeight: '700', display: 'block', marginBottom: '8px' }}>Buscar usuario por apodo</label>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <input type="text" value={busquedaAmigo} onChange={(e) => setBusquedaAmigo(e.target.value)} placeholder="Apodo del amigo..." className="input-field" style={{ flex: 1 }} />
           <button type="button" onClick={() => setSoloCompatibles(!soloCompatibles)} className={soloCompatibles ? "btn-primary" : "btn-secondary"} style={{ padding: '0 12px', fontSize: '13px', background: soloCompatibles ? '#10B981' : '', color: soloCompatibles ? '#FFF' : '', borderColor: soloCompatibles ? '#10B981' : '' }}>
-            {soloCompatibles ? '✅ Compatibles' : '🔀 Todos'}
+            {soloCompatibles ? 'Compatibles' : 'Todos'}
           </button>
         </div>
         <form onSubmit={añadirAmigoNuevo} style={{ borderTop: '1px solid #F1F5F9', paddingTop: '14px', display: 'flex', gap: '8px' }}>
           <input type="text" value={nuevoAmigoNombre} onChange={(e) => setNuevoAmigoNombre(e.target.value)} placeholder="Nombre del amigo..." className="input-field" style={{ flex: 1, fontSize: '14px' }} />
-          <button type="submit" className="btn-primary" style={{ background: '#6EE7B7', color: '#0F766E' }}>➕ Añadir</button>
+          <button type="submit" className="btn-primary" style={{ background: '#6EE7B7', color: '#0F766E' }}>Añadir</button>
         </form>
       </div>
       {amigosFiltrados.length === 0 ? (

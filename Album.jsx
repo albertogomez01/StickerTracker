@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { SELECCIONES } from './utils';
 
+let globalAudioCtx = null;
+
 export default function Album({ perfil, alternarCromoManual, isMuted }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
@@ -10,25 +12,29 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
     if (isMuted) return; // Se omite el sonido si está silenciado
 
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      const audioCtx = new AudioContext();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+      if (!globalAudioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        globalAudioCtx = new AudioContext();
+      }
+      if (globalAudioCtx.state === 'suspended') {
+        globalAudioCtx.resume();
+      }
+      const oscillator = globalAudioCtx.createOscillator();
+      const gainNode = globalAudioCtx.createGain();
 
       oscillator.type = 'sine';
-      // Empieza en un tono agudo y baja rápidamente para sonar como una burbuja o "pop"
-      oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(600, globalAudioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, globalAudioCtx.currentTime + 0.1);
 
-      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.3, globalAudioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, globalAudioCtx.currentTime + 0.1);
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+      gainNode.connect(globalAudioCtx.destination);
       oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.1);
+      oscillator.stop(globalAudioCtx.currentTime + 0.1);
     } catch (e) {
-      // Ignorar si el navegador tiene el audio bloqueado o no lo soporta
+      console.warn("Audio no soportado o bloqueado en este navegador.");
     }
   };
 
@@ -40,8 +46,8 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
   };
 
   const renderDigitalFlag = (sel) => {
-    if (sel.id === 'FWC') return <span style={{ fontSize: '18px' }}>🏆</span>;
-    if (sel.id === 'CC') return <span style={{ fontSize: '18px' }}>🥤</span>;
+    if (sel.id === 'FWC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Copa</span>;
+    if (sel.id === 'CC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>CC</span>;
     return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
   };
 
@@ -108,7 +114,7 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
                   })
                   .map(s => {
                     let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
-                    let txt = s.numeroVisual === 1 ? '🛡️ Escudo' : `${sel.id} ${s.numeroVisual}`;
+                    let txt = s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`;
                     if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
                     return (
                       <button key={s.codigo} onClick={() => handleStickerClick(s.codigo)} className={`sticker-btn ${animatingSticker === s.codigo ? 'animate-pop' : ''}`} style={{ background: bg }}>

@@ -94,7 +94,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
       // Ordenar primero por la cantidad de cromos que me ofrecen (meDa), y en caso de empate por el total
       matches.sort((a, b) => b.meDa - a.meDa || b.total - a.total);
       setUsuariosMercado(matches);
-      if (matches.length === 0) toast("No se encontraron usuarios con cromos compatibles por ahora.", { icon: '🔍' });
+      if (matches.length === 0) toast("No se encontraron usuarios con cromos compatibles por ahora.");
     } catch (e) {
       console.error(e);
       toast.error("Error al buscar en el mercado.");
@@ -119,7 +119,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
         status: 'pending',
         timestamp: Date.now()
       });
-      toast.success(`¡Solicitud enviada a @${matchUser.nickname}! Estará en su buzón.`);
+      toast.success(`Solicitud enviada a @${matchUser.nickname}. Estará en su buzón.`);
     } catch (e) {
       console.error(e);
       toast.error("Error al enviar la solicitud.");
@@ -177,7 +177,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
       const notifRef = doc(db, 'notificaciones', solicitud.from);
       const notifSnap = await getDoc(notifRef);
       let notifs = notifSnap.exists() ? (notifSnap.data().lista || []) : [];
-      notifs.push({ id: Date.now().toString(), text: `¡@${perfil.nickname} ha aceptado tu solicitud de intercambio!`, read: false });
+      notifs.push({ id: Date.now().toString(), text: `@${perfil.nickname} ha aceptado tu solicitud de intercambio.`, read: false });
       await setDoc(notifRef, { lista: notifs });
 
       // 5. Cambiar a la pestaña de intercambios directamente
@@ -214,9 +214,9 @@ export default function Mercado({ perfil, setSeccionActual }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div className="card" style={{ display: 'flex', gap: '8px', padding: '12px' }}>
-        <button onClick={() => setTab('explorar')} className="btn-secondary" style={{ flex: 1, background: tab === 'explorar' ? 'var(--accent-primary)' : '', color: tab === 'explorar' ? '#FFF' : '', borderColor: tab === 'explorar' ? 'var(--accent-primary)' : '' }}>🌍 Explorar</button>
+        <button onClick={() => setTab('explorar')} className="btn-secondary" style={{ flex: 1, background: tab === 'explorar' ? 'var(--accent-primary)' : '', color: tab === 'explorar' ? '#FFF' : '', borderColor: tab === 'explorar' ? 'var(--accent-primary)' : '' }}>Explorar</button>
         <button onClick={() => setTab('buzon')} className="btn-secondary" style={{ flex: 1, position: 'relative', background: tab === 'buzon' ? 'var(--accent-primary)' : '', color: tab === 'buzon' ? '#FFF' : '', borderColor: tab === 'buzon' ? 'var(--accent-primary)' : '' }}>
-          📬 Buzón
+          Buzón
           {solicitudes.length > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#EF4444', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold' }}>{solicitudes.length}</span>}
         </button>
       </div>
@@ -224,12 +224,12 @@ export default function Mercado({ perfil, setSeccionActual }) {
       {tab === 'explorar' && (
         <>
           <div className="card">
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>🌍 Mercado Público</h3>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Mercado Público</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', marginTop: 0 }}>Publica tu lista actual de cromos para que otros puedan encontrarte, o busca personas con las que tengas alta compatibilidad.</p>
-            <button onClick={togglePublicar} className={publicado ? "btn-danger" : "btn-primary"} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} disabled={loading}>{loading ? '⏳ Procesando...' : (publicado ? 'Ocultar mi perfil del Mercado' : '📢 Publicar mi lista en el Mercado')}</button>
+            <button onClick={togglePublicar} className={publicado ? "btn-danger" : "btn-primary"} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} disabled={loading}>{loading ? 'Procesando...' : (publicado ? 'Ocultar mi perfil del Mercado' : 'Publicar mi lista en el Mercado')}</button>
           </div>
           <div className="card" style={{ padding: '12px' }}>
-            <button onClick={buscarMatches} className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }} disabled={loading}>🔍 {loading ? 'Buscando...' : 'Buscar Intercambios Compatibles'}</button>
+            <button onClick={buscarMatches} className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }} disabled={loading}>{loading ? 'Buscando...' : 'Buscar Intercambios Compatibles'}</button>
           </div>
           {usuariosMercado.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -244,7 +244,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
                       <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{user.nickname}</div>
                       <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Me da: <span style={{ color: '#D97706', fontWeight: 'bold' }}>{user.meDa}</span> | Le doy: <span style={{ color: '#059669', fontWeight: 'bold' }}>{user.leDoy}</span></div>
                     </div>
-                    <button onClick={() => enviarSolicitud(user)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '10px' }}>✉️ Solicitar</button>
+                    <button onClick={() => enviarSolicitud(user)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '10px' }}>Solicitar</button>
                   </div>
                 ))
               )}
@@ -256,7 +256,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
       {tab === 'buzon' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div className="card">
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>📬 Buzón de Solicitudes</h3>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Buzón de Solicitudes</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 0, marginTop: 0 }}>Gestiona las solicitudes de intercambio recibidas y enviadas.</p>
           </div>
           
@@ -271,8 +271,8 @@ export default function Mercado({ perfil, setSeccionActual }) {
                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Quiere intercambiar cromos</div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <button onClick={() => rechazarSolicitud(solicitud.id)} className="btn-danger" style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', minWidth: 'auto' }}>❌</button>
-                  <button onClick={() => aceptarSolicitud(solicitud)} className="btn-primary" style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', background: '#10B981', minWidth: 'auto' }}>✓ Aceptar</button>
+                  <button onClick={() => rechazarSolicitud(solicitud.id)} className="btn-danger" style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', minWidth: 'auto' }}>Rechazar</button>
+                  <button onClick={() => aceptarSolicitud(solicitud)} className="btn-primary" style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', background: '#10B981', minWidth: 'auto' }}>Aceptar</button>
                 </div>
               </div>
             ))

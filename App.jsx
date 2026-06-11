@@ -63,11 +63,14 @@ export default function App() {
   useEffect(() => {
     // El "guardián" de Firebase: vigila que la sesión sea válida al recargar
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      const guardado = localStorage.getItem('panini_perfil');
-      const perfilLocal = guardado ? JSON.parse(guardado) : null;
+      let perfilLocal = null;
+      try {
+        const guardado = localStorage.getItem('panini_perfil');
+        if (guardado) perfilLocal = JSON.parse(guardado);
+      } catch(e) {}
 
       if (user) {
-        // Si Firebase confirma la sesión pero no la tenemos en la app, la recuperamos
+        // Si Firebase confirma la sesión pero no la tenemos, la recuperamos
         if (!perfilLocal || perfilLocal.id !== user.uid) {
           const docSnap = await getDoc(doc(db, "usuarios", user.uid));
           if (docSnap.exists()) setPerfil(docSnap.data());
@@ -115,10 +118,10 @@ export default function App() {
         if (noLeidas.length > 0) {
           // Lanzar notificación nativa por cada aviso no leído
           if ("Notification" in window && Notification.permission === "granted") {
-            noLeidas.forEach(n => new Notification("Nuevo Intercambio 🔄", { body: n.text, icon: 'https://media.base44.com/images/public/6a2595c43f4f5e19a4497bd1/5bd12f067_logo.png' }));
+            noLeidas.forEach(n => new Notification("Nuevo Intercambio", { body: n.text, icon: 'https://media.base44.com/images/public/6a2595c43f4f5e19a4497bd1/5bd12f067_logo.png' }));
           } else {
             // Fallback: usar un alert estándar si no dio permisos
-            toast("🔔 Nueva notificación:\n" + noLeidas.map(n => n.text).join('\n'), { icon: '🔔' });
+            toast("Nueva notificación:\n" + noLeidas.map(n => n.text).join('\n'));
           }
           
           // Marcar como leídas automáticamente en Firestore para no repetir

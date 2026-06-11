@@ -10,8 +10,8 @@ export const generarImagenTrueque = (perfilNickname, nickAmigo, leDoyList, meDaL
   ctx.fillText(`Propuesta de Intercambio: @${perfilNickname} ↔ @${nickAmigo}`, 25, 42);
   
   ctx.fillStyle = '#1E293B'; ctx.font = 'bold 15px system-ui';
-  ctx.fillText(`🎁 Lo que Yo le doy a @${nickAmigo} (${leDoyList.length}):`, 40, 110);
-  ctx.fillText(`📥 Lo que @${nickAmigo} me da a Mí (${meDaList.length}):`, 370, 110);
+  ctx.fillText(`Lo que Yo le doy a @${nickAmigo} (${leDoyList.length}):`, 40, 110);
+  ctx.fillText(`Lo que @${nickAmigo} me da a Mí (${meDaList.length}):`, 370, 110);
   
   ctx.font = '14px system-ui'; ctx.fillStyle = '#475569';
   let yYo = 140; leDoyList.slice(0, 15).forEach(c => { ctx.fillText(`• ${c}`, 40, yYo); yYo += 22; });
@@ -34,7 +34,7 @@ export const generarImagenTrueque = (perfilNickname, nickAmigo, leDoyList, meDaL
         await navigator.share({
           files: [file],
           title: 'Propuesta de Intercambio',
-          text: `¡Hola! Mira esta propuesta de intercambio de cromos. 🔄`
+          text: `¡Hola! Mira esta propuesta de intercambio de cromos.`
         });
       } catch (error) {
         console.log("El usuario canceló el menú de compartir");
