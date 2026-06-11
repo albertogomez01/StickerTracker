@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, getDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, getDoc, query, where, onSnapshot, limit, orderBy } from 'firebase/firestore';
 import { SELECCIONES } from './utils';
 import { toast } from 'react-hot-toast';
 
@@ -62,7 +62,8 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const buscarMatches = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, 'mercado'));
+      const qMercado = query(collection(db, 'mercado'), orderBy('timestamp', 'desc'), limit(50));
+      const querySnapshot = await getDocs(qMercado);
       const matches = [];
 
       querySnapshot.forEach((document) => {
