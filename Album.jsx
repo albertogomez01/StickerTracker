@@ -3,7 +3,7 @@ import { ALBUMS } from './utils';
 
 let globalAudioCtx = null;
 
-export default function Album({ perfil, alternarCromoManual, isMuted, albumActivo }) {
+export default function Album({ perfil, alternarCromoManual, marcarEquipoCompleto, isMuted, albumActivo }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'faltantes', 'repetidos'
@@ -111,8 +111,17 @@ export default function Album({ perfil, alternarCromoManual, isMuted, albumActiv
               <span style={{ color: '#94A3B8', fontSize: '10px' }}>{seleccionExpandida === sel.id ? '▲' : '▼'}</span>
             </div>
             {seleccionExpandida === sel.id && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px', marginTop: '12px', background: 'var(--bg-input)', padding: '12px', borderRadius: '16px' }}>
-                {Array.from({ length: sel.total })
+              <div style={{ marginTop: '12px', background: 'var(--bg-input)', padding: '12px', borderRadius: '16px' }}>
+                {pctSel < 100 && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+                    <button onClick={(e) => { e.stopPropagation(); marcarEquipoCompleto(sel.id); }} className="btn-secondary" style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                      Completar equipo
+                    </button>
+                  </div>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
+                  {Array.from({ length: sel.total })
                   .map((_, index) => {
                     const numeroVisual = index + 1;
                     const codigo = `${sel.id}_${index.toString().padStart(2, '0')}`;
@@ -134,6 +143,7 @@ export default function Album({ perfil, alternarCromoManual, isMuted, albumActiv
                       </button>
                     );
                   })}
+                </div>
               </div>
             )}
           </div>

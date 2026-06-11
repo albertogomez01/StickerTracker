@@ -336,6 +336,28 @@ export default function App() {
     });
   };
 
+  const marcarEquipoCompleto = (equipoId) => {
+    if (!window.confirm(`¿Seguro que quieres marcar todos los cromos de este equipo como "Tengo"?`)) return;
+    setPerfil(prev => {
+      const copia = { ...prev.stickers };
+      const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
+      const seleccion = albumData.selecciones.find(s => s.id === equipoId);
+      
+      if (seleccion) {
+        for (let i = 0; i < seleccion.total; i++) {
+          const cod = `${seleccion.id}_${i.toString().padStart(2, '0')}`;
+          // Solo marca a 1 los que nos falten. Si alguno ya es 2 (repetido), lo deja igual
+          if (!copia[cod] || copia[cod] === 0) copia[cod] = 1;
+        }
+      }
+      
+      const nuevoPerfil = { ...prev, stickers: copia };
+      if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      return nuevoPerfil;
+    });
+    toast.success(`Equipo completado correctamente.`);
+  };
+
   const procesarImportadorTexto = (texto, tipo) => {
     setPerfil(prev => {
       const nuevaCopia = parsearTextoAStickers(texto, tipo, albumActivo, prev.stickers);
@@ -421,7 +443,7 @@ export default function App() {
       </div>
       <div className="content-wrapper">
         <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '14px' }}>Cargando sección...</div>}>
-          {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} albumActivo={albumActivo} />}
+          {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} marcarEquipoCompleto={marcarEquipoCompleto} isMuted={isMuted} albumActivo={albumActivo} />}
           {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
           {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} />}
           {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} />}
