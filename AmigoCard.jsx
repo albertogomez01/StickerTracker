@@ -72,7 +72,9 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ position: 'relative' }}>
-            <div style={{ width: '32px', height: '32px', background: currentAvatarColor.bg, color: currentAvatarColor.text, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{amigo.nickname.charAt(0).toUpperCase()}</div>
+            <div style={{ width: '32px', height: '32px', background: currentAvatarColor.bg, color: currentAvatarColor.text, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', overflow: 'hidden' }}>
+              {amigo.photoURL ? <img src={amigo.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : amigo.nickname.charAt(0).toUpperCase()}
+            </div>
             {isOnline && <div style={{ position: 'absolute', bottom: 0, right: '-2px', width: '12px', height: '12px', background: '#10B981', border: '2px solid var(--bg-card)', borderRadius: '50%' }}></div>}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>

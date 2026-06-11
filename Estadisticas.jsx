@@ -138,7 +138,12 @@ export default function Estadisticas({ albumActivo, perfil }) {
                 <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: index < ranking.length - 1 ? '1px solid var(--border-primary)' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontWeight: 'bold', color: index < 3 ? '#F59E0B' : 'var(--text-secondary)', width: '24px' }}>#{index + 1}</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: u.id === perfil?.id ? 'var(--accent-primary)' : 'var(--text-primary)' }}>@{u.nickname}</span>
+                    {u.photoURL ? (
+                      <img src={u.photoURL} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--bg-input)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>{u.nickname.charAt(0).toUpperCase()}</div>
+                    )}
+                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: u.id === perfil?.id ? 'var(--accent-primary)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>@{u.nickname}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{u.tCount} cromos</span>

@@ -210,6 +210,48 @@ export default function App() {
     }
   };
 
+  const cambiarFoto = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const size = 150;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        
+        const scale = Math.max(size / img.width, size / img.height);
+        const x = (size / scale - img.width) / 2;
+        const y = (size / scale - img.height) / 2;
+        
+        ctx.drawImage(img, 0, 0, img.width, img.height, x * scale, y * scale, img.width * scale, img.height * scale);
+        
+        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+        const nuevoPerfil = { ...perfil, photoURL: base64 };
+        setPerfil(nuevoPerfil);
+        
+        try {
+          await setDoc(doc(db, "usuarios", perfil.id), nuevoPerfil);
+          const colMercado = albumActivo === 'mundial_2026' ? 'mercado' : `mercado_${albumActivo}`;
+          const mercadoRef = doc(db, colMercado, perfil.id);
+          const mercadoSnap = await getDoc(mercadoRef);
+          if (mercadoSnap.exists()) {
+            await setDoc(mercadoRef, { photoURL: base64 }, { merge: true });
+          }
+          toast.success("Foto de perfil actualizada");
+        } catch (error) {
+          console.error(error);
+          toast.error("Error al actualizar la foto");
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleLogout = async () => {
     if (window.confirm("¿Seguro que quieres cerrar sesión? Se borrarán tus datos guardados.")) {
       try { await signOut(auth); } catch (e) { console.error("Error al cerrar sesión:", e); }
@@ -310,7 +352,7 @@ export default function App() {
   return (
     <div className="app-container">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
-      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} />
+      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} />
       
       {installPrompt && (
         <div style={{ background: 'var(--accent-primary)', color: '#FFF', padding: '12px', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '16px 12px 0 12px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>

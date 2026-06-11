@@ -3,7 +3,7 @@ import './App.css';
 import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, albumActivo, setAlbumActivo }) {
+export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
@@ -87,18 +87,30 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
         </button>
         <div style={{ position: 'relative' }}>
           <button onClick={() => { setShowDropdown(!showDropdown); setShowAlbumDropdown(false); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '99px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'background 0.2s' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+            {perfil.photoURL && <img src={perfil.photoURL} alt="" style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover', margin: '-2px 0' }} />}
             @{perfil.nickname} <span style={{ fontSize: '10px' }}>{showDropdown ? '▲' : '▼'}</span>
           </button>
           {showDropdown && (
             <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '12px', background: 'var(--bg-card)', borderRadius: '14px', padding: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', minWidth: '180px', zIndex: 1001, display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--border-primary)' }}>
-              <div style={{ padding: '8px 12px', cursor: 'default' }}>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>@{perfil.nickname}</div>
-                {perfil.email && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', wordBreak: 'break-all' }}>{perfil.email}</div>}
+              <div style={{ padding: '8px 12px', cursor: 'default', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {perfil.photoURL ? (
+                  <img src={perfil.photoURL} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold' }}>{perfil.nickname.charAt(0).toUpperCase()}</div>
+                )}
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>@{perfil.nickname}</div>
+                  {perfil.email && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', wordBreak: 'break-all' }}>{perfil.email}</div>}
+                </div>
               </div>
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '0 0 4px 0' }}></div>
               <button onClick={handleEditNickname} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
                 Editar apodo
               </button>
+              <label style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%', display: 'block', margin: 0 }}>
+                Cambiar foto
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { cambiarFoto(e); setShowDropdown(false); }} />
+              </label>
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <a href="https://ko-fi.com/stickertracker01" target="_blank" rel="noopener noreferrer" onClick={() => setShowDropdown(false)} style={{ textDecoration: 'none', color: '#FF5E5B', padding: '12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', background: 'rgba(255, 94, 91, 0.1)', textAlign: 'left', display: 'block' }}>
                 Apoyar proyecto

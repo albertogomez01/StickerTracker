@@ -139,7 +139,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
 
         // Solo mostrar usuarios con los que tenemos AL MENOS 1 cromo de intercambio útil
         if (leDoy > 0 || meDa > 0) {
-          matches.push({ id: document.id, nickname: data.nickname, leDoy, meDa, total: leDoy + meDa, stickers: data.stickers });
+          matches.push({ id: document.id, nickname: data.nickname, photoURL: data.photoURL, leDoy, meDa, total: leDoy + meDa, stickers: data.stickers });
         }
       });
 
@@ -166,8 +166,10 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
       await setDoc(solRef, {
         from: perfil.id,
         fromNickname: perfil.nickname,
+        fromPhotoURL: perfil.photoURL || null,
         to: matchUser.id,
         toNickname: matchUser.nickname,
+        toPhotoURL: matchUser.photoURL || null,
         status: 'pending',
         timestamp: Date.now()
       });
@@ -210,7 +212,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
         const mercadoSnap = await getDoc(doc(db, getCol('mercado'), solicitud.from));
         const dataMercado = mercadoSnap.exists() ? mercadoSnap.data() : { stickers: {} };
         const { rawFaltantes, rawRepetidos } = generarRawListas(dataMercado.stickers);
-        miLista.unshift({ id: solicitud.from, nickname: solicitud.fromNickname, stickers: dataMercado.stickers, rawFaltantes, rawRepetidos });
+        miLista.unshift({ id: solicitud.from, nickname: solicitud.fromNickname, photoURL: solicitud.fromPhotoURL || dataMercado.photoURL || null, stickers: dataMercado.stickers, rawFaltantes, rawRepetidos });
         await setDoc(misAmigosRef, { lista: miLista });
       }
 
@@ -221,7 +223,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
       
       if (!suLista.some(u => u.id === perfil.id)) {
         const { rawFaltantes, rawRepetidos } = generarRawListas(perfil.stickers);
-        suLista.unshift({ id: perfil.id, nickname: perfil.nickname, stickers: perfil.stickers, rawFaltantes, rawRepetidos });
+        suLista.unshift({ id: perfil.id, nickname: perfil.nickname, photoURL: perfil.photoURL || null, stickers: perfil.stickers, rawFaltantes, rawRepetidos });
         await setDoc(susAmigosRef, { lista: suLista });
       }
 
@@ -330,9 +332,16 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
               ) : (
                 usuariosFiltrados.map(user => (
                   <div key={user.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
-                    <div>
-                      <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{user.nickname}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Me da: <span style={{ color: '#D97706', fontWeight: 'bold' }}>{user.meDa}</span> | Le doy: <span style={{ color: '#059669', fontWeight: 'bold' }}>{user.leDoy}</span></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{user.nickname.charAt(0).toUpperCase()}</div>
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{user.nickname}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Me da: <span style={{ color: '#D97706', fontWeight: 'bold' }}>{user.meDa}</span> | Le doy: <span style={{ color: '#059669', fontWeight: 'bold' }}>{user.leDoy}</span></div>
+                      </div>
                     </div>
                     <button onClick={() => enviarSolicitud(user)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '10px' }}>Solicitar</button>
                   </div>
@@ -356,9 +365,16 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
           ) : (
             solicitudes.map(solicitud => (
               <div key={solicitud.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{solicitud.fromNickname}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Quiere intercambiar cromos</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {solicitud.fromPhotoURL ? (
+                    <img src={solicitud.fromPhotoURL} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{solicitud.fromNickname.charAt(0).toUpperCase()}</div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{solicitud.fromNickname}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Quiere intercambiar cromos</div>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button onClick={() => rechazarSolicitud(solicitud.id)} className="btn-danger" style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', minWidth: 'auto' }}>Rechazar</button>
@@ -374,9 +390,16 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
           ) : (
             solicitudesEnviadas.map(solicitud => (
               <div key={solicitud.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{solicitud.toNickname}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Esperando respuesta...</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {solicitud.toPhotoURL ? (
+                    <img src={solicitud.toPhotoURL} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{solicitud.toNickname.charAt(0).toUpperCase()}</div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{solicitud.toNickname}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Esperando respuesta...</div>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button onClick={() => cancelarSolicitud(solicitud.id)} className="btn-danger" style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', minWidth: 'auto' }}>Cancelar</button>
