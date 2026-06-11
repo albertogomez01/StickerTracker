@@ -37,6 +37,7 @@ export default function App() {
   });
   const [showConfetti, setShowConfetti] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('panini_theme') || 'light');
+  const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('panini_tutorial_seen'));
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -293,6 +294,32 @@ export default function App() {
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
       <SpeedInsights />
       <Toaster position="bottom-center" />
+
+      {showTutorial && (
+        <div className="modal-overlay">
+          <div className="card modal-content" style={{ margin: 0, padding: '24px' }}>
+            <h2 style={{ marginTop: 0, color: 'var(--accent-primary)', fontSize: '22px' }}>Bienvenido al Gestor</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5' }}>
+              Sigue estos sencillos pasos para completar tu coleccion rapidamente:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '20px 0' }}>
+              <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '12px' }}>
+                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>1. Mi album</strong>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Marca los cromos que vas consiguiendo. Los repetidos se sumaran automaticamente.</span>
+              </div>
+              <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '12px' }}>
+                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>2. Mercado Publico</strong>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Publica tu lista para que otros te encuentren y solicita intercambios a perfiles compatibles.</span>
+              </div>
+              <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '12px' }}>
+                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>3. Intercambios</strong>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cruza tus listas con las de tus amigos y comparte imagenes resumen para coordinarte.</span>
+              </div>
+            </div>
+            <button onClick={() => { setShowTutorial(false); localStorage.setItem('panini_tutorial_seen', 'true'); }} className="btn-primary" style={{ width: '100%' }}>Comenzar</button>
+          </div>
+        </div>
+      )}
     </div>
 
   );
