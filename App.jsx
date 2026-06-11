@@ -19,6 +19,7 @@ import { Toaster, toast } from 'react-hot-toast';
 export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [seccionActual, setSeccionActual] = useState('intercambios');
+  const [installPrompt, setInstallPrompt] = useState(null);
   const [perfil, setPerfil] = useState(() => {
     try {
       const guardado = localStorage.getItem('panini_perfil');
@@ -47,6 +48,16 @@ export default function App() {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
+  }, []);
+
+  useEffect(() => {
+    // Escuchar cuando el dispositivo este listo para instalar la PWA
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   useEffect(() => {
@@ -244,6 +255,14 @@ export default function App() {
     <div className="app-container">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
       <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} />
+      
+      {installPrompt && (
+        <div style={{ background: 'var(--accent-primary)', color: '#FFF', padding: '12px', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '16px 12px 0 12px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+          <span style={{ fontSize: '13px', fontWeight: '600' }}>Instala la aplicacion para acceder mas rapido</span>
+          <button onClick={async () => { installPrompt.prompt(); const { outcome } = await installPrompt.userChoice; if(outcome === 'accepted') setInstallPrompt(null); }} style={{ background: '#FFF', color: 'var(--accent-primary)', border: 'none', padding: '6px 12px', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>Instalar</button>
+        </div>
+      )}
+
       <div className="content-wrapper" style={{ marginTop: '16px' }}>
         <div className="card stats-card-modern">
           <div className="stats-header">
