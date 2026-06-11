@@ -6,27 +6,32 @@ import { signInWithPopup } from 'firebase/auth';
 
 export default function LoginScreen({ onLogin }) {
   const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     setErrorMsg('');
+    setIsLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       // Pasamos el objeto 'user' completo que nos da Firebase. Contiene el UID seguro.
-      onLogin(user);
+      await onLogin(user);
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error);
       setErrorMsg(error.message);
+      setIsLoading(false);
     }
   };
 
-  const handleGuestLogin = () => {
+  const handleGuestLogin = async () => {
+    setIsLoading(true);
     const guestUser = {
       uid: 'invitado_' + Date.now(),
       displayName: 'Invitado',
       email: null
     };
-    onLogin(guestUser);
+    await onLogin(guestUser);
+    setIsLoading(false);
   };
 
   return (
@@ -44,13 +49,19 @@ export default function LoginScreen({ onLogin }) {
         
         {errorMsg && <div style={{ color: '#DC2626', background: '#FEF2F2', padding: '10px', borderRadius: '8px', fontSize: '13px', marginBottom: '14px', border: '1px solid #FCA5A5' }}>Error: {errorMsg}</div>}
 
-        <button type="button" onClick={handleGoogleLogin} className="btn-google">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" />
-          <span>Continuar con Google</span>
+        <button type="button" onClick={handleGoogleLogin} className="btn-google" disabled={isLoading} style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'wait' : 'pointer' }}>
+          {isLoading ? (
+            <span>⏳ Cargando tu álbum...</span>
+          ) : (
+            <>
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" />
+              <span>Continuar con Google</span>
+            </>
+          )}
         </button>
 
-        <button type="button" onClick={handleGuestLogin} className="btn-secondary" style={{ width: '100%', marginTop: '10px' }}>
-          👤 Entrar como Invitado
+        <button type="button" onClick={handleGuestLogin} className="btn-secondary" disabled={isLoading} style={{ width: '100%', marginTop: '10px', opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'wait' : 'pointer' }}>
+          {isLoading ? '⏳ Entrando...' : '👤 Entrar como Invitado'}
         </button>
 
         <div className="login-footer">
