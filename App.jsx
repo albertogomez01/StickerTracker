@@ -153,6 +153,31 @@ export default function App() {
     }
   }, [perfil]);
 
+  useEffect(() => {
+    // Sistema de presencia en línea
+    if (!perfil?.id || perfil.id.startsWith('invitado_')) return;
+    const userRef = doc(db, 'usuarios', perfil.id);
+
+    const setOnline = () => setDoc(userRef, { isOnline: true, lastSeen: Date.now() }, { merge: true }).catch(() => {});
+    const setOffline = () => setDoc(userRef, { isOnline: false, lastSeen: Date.now() }, { merge: true }).catch(() => {});
+
+    setOnline();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') setOnline();
+      else setOffline();
+    };
+
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('beforeunload', setOffline);
+
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('beforeunload', setOffline);
+      setOffline();
+    };
+  }, [perfil?.id]);
+
   const toggleMute = () => {
     setIsMuted(prev => {
       const newVal = !prev;

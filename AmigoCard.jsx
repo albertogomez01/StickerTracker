@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SELECCIONES } from './utils';
 import { generarImagenTrueque } from './canvasUtils';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
 
 const AVATAR_COLORS = [
   { bg: '#E0F2FE', text: '#0369A1' }, // Azul
@@ -20,6 +22,18 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
   const [exclusiones, setExclusiones] = useState({});
   const currentAvatarColor = amigo.avatarColor || AVATAR_COLORS[0];
   const [colorInput, setColorInput] = useState(currentAvatarColor);
+  const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    // Los amigos añadidos a mano ("u_...") no tienen estado en línea
+    if (!amigo.id || amigo.id.startsWith('u_')) return; 
+    const unsub = onSnapshot(doc(db, 'usuarios', amigo.id), (snap) => {
+      if (snap.exists()) {
+        setIsOnline(snap.data().isOnline === true);
+      }
+    });
+    return () => unsub();
+  }, [amigo.id]);
 
   let fCount = 0; let tCount = 0; let rCount = 0;
   SELECCIONES.forEach(s => {
@@ -57,8 +71,14 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '32px', height: '32px', background: currentAvatarColor.bg, color: currentAvatarColor.text, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{amigo.nickname.charAt(0).toUpperCase()}</div>
-          <span style={{ fontWeight: '700', fontSize: '16px' }}>{amigo.nickname}</span>
+          <div style={{ position: 'relative' }}>
+            <div style={{ width: '32px', height: '32px', background: currentAvatarColor.bg, color: currentAvatarColor.text, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{amigo.nickname.charAt(0).toUpperCase()}</div>
+            {isOnline && <div style={{ position: 'absolute', bottom: 0, right: '-2px', width: '12px', height: '12px', background: '#10B981', border: '2px solid var(--bg-card)', borderRadius: '50%' }}></div>}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontWeight: '700', fontSize: '16px' }}>{amigo.nickname}</span>
+            <span style={{ fontSize: '11px', color: isOnline ? '#10B981' : 'var(--text-secondary)' }}>{isOnline ? 'En línea' : 'Desconectado'}</span>
+          </div>
         </div>
         <span style={{ background: '#F1F5F9', color: '#475569', fontSize: '11px', padding: '4px 10px', borderRadius: '99px' }}>
           {realesLeDoy.length > 0 || realesElMeDa.length > 0 ? 'Intercambio Listo' : 'Pocos en común'}
