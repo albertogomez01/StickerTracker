@@ -315,7 +315,7 @@ export default function App() {
         {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
         {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} />}
         {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} />}
-        {seccionActual === 'stats' && <Estadisticas albumActivo={albumActivo} />}
+        {seccionActual === 'stats' && <Estadisticas albumActivo={albumActivo} perfil={perfil} />}
       </div>
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
       
