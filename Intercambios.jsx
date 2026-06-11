@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { parsearTextoAStickers } from './utils';
+import { parsearTextoAStickers, SELECCIONES } from './utils';
 import AmigoCard from './AmigoCard';
 import { db } from './firebase';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
 
 export default function Intercambios({ perfil }) {
   const [comunidadUsuarios, setComunidadUsuarios] = useState([]);
   const [datosCargados, setDatosCargados] = useState(false);
   const [nuevoAmigoNombre, setNuevoAmigoNombre] = useState('');
   const [busquedaAmigo, setBusquedaAmigo] = useState('');
+  const [soloCompatibles, setSoloCompatibles] = useState(false);
 
   useEffect(() => {
     if (!perfil?.id) {
@@ -46,7 +48,7 @@ export default function Intercambios({ perfil }) {
     if (!nuevoAmigoNombre.trim()) return;
     const nombreLimpio = nuevoAmigoNombre.trim();
     if (comunidadUsuarios.some(u => u.nickname.toLowerCase() === nombreLimpio.toLowerCase())) {
-      return alert("Este amigo ya está en tu lista.");
+      return toast.error("Este amigo ya está en tu lista.");
     }
     const nuevoAmigo = { id: 'u_' + Date.now(), nickname: nombreLimpio, stickers: {}, rawFaltantes: '', rawRepetidos: '' };
     setComunidadUsuarios(prev => {
@@ -81,7 +83,28 @@ export default function Intercambios({ perfil }) {
     });
   };
 
-  const amigosFiltrados = comunidadUsuarios.filter(u => u.nickname.toLowerCase().includes(busquedaAmigo.toLowerCase()));
+  const amigosFiltrados = comunidadUsuarios.filter(u => {
+    const coincideTexto = u.nickname.toLowerCase().includes(busquedaAmigo.toLowerCase());
+    if (!coincideTexto) return false;
+
+    if (soloCompatibles) {
+      let compatible = false;
+      for (const sel of SELECCIONES) {
+        for (let i = 0; i < sel.total; i++) {
+          const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+          const miEstado = perfil?.stickers?.[cod] || 0;
+          const suEstado = u.stickers?.[cod] || 0;
+          if ((miEstado >= 2 && suEstado === 0) || (suEstado >= 2 && miEstado === 0)) {
+            compatible = true;
+            break;
+          }
+        }
+        if (compatible) break;
+      }
+      return compatible;
+    }
+    return true;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -89,6 +112,9 @@ export default function Intercambios({ perfil }) {
         <label style={{ fontSize: '14px', fontWeight: '700', display: 'block', marginBottom: '8px' }}>🔍 Buscar usuario por apodo</label>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <input type="text" value={busquedaAmigo} onChange={(e) => setBusquedaAmigo(e.target.value)} placeholder="Apodo del amigo..." className="input-field" style={{ flex: 1 }} />
+          <button type="button" onClick={() => setSoloCompatibles(!soloCompatibles)} className={soloCompatibles ? "btn-primary" : "btn-secondary"} style={{ padding: '0 12px', fontSize: '13px', background: soloCompatibles ? '#10B981' : '', color: soloCompatibles ? '#FFF' : '', borderColor: soloCompatibles ? '#10B981' : '' }}>
+            {soloCompatibles ? '✅ Compatibles' : '🔀 Todos'}
+          </button>
         </div>
         <form onSubmit={añadirAmigoNuevo} style={{ borderTop: '1px solid #F1F5F9', paddingTop: '14px', display: 'flex', gap: '8px' }}>
           <input type="text" value={nuevoAmigoNombre} onChange={(e) => setNuevoAmigoNombre(e.target.value)} placeholder="Nombre del amigo..." className="input-field" style={{ flex: 1, fontSize: '14px' }} />

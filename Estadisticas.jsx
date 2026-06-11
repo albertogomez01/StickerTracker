@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { SELECCIONES } from './utils';
+import { toast } from 'react-hot-toast';
 
 export default function Estadisticas() {
   const [stats, setStats] = useState(null);
@@ -15,7 +16,7 @@ export default function Estadisticas() {
       const totalUsuarios = mercadoSnapshot.size;
       
       if (totalUsuarios < 2) {
-        alert("Se necesitan al menos 2 usuarios en el mercado para calcular estadísticas.");
+        toast.error("Se necesitan al menos 2 usuarios en el mercado para calcular estadísticas.");
         setLoading(false);
         return;
       }
@@ -51,7 +52,7 @@ export default function Estadisticas() {
 
     } catch (e) {
       console.error(e);
-      alert("Error al calcular las estadísticas. Revisa los permisos de Firebase.");
+      toast.error("Error al calcular las estadísticas.");
     }
     setLoading(false);
   };

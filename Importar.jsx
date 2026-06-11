@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SELECCIONES } from './utils';
+import { toast } from 'react-hot-toast';
 
 export default function Importar({ procesarImportadorTexto, perfil }) {
   const [textoFaltantes, setTextoFaltantes] = useState('');
@@ -33,9 +34,9 @@ export default function Importar({ procesarImportadorTexto, perfil }) {
   const exportarListas = () => {
     const textoFinal = generarTextoListas();
     navigator.clipboard.writeText(textoFinal).then(() => {
-      alert("¡Listas copiadas al portapapeles!");
+      toast.success("¡Listas copiadas al portapapeles!");
     }).catch(() => {
-      alert("Error al copiar al portapapeles.");
+      toast.error("Error al copiar al portapapeles.");
     });
   };
 

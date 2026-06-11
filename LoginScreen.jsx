@@ -3,6 +3,7 @@ import { LOGO_URL } from './utils';
 import './App.css';
 import { auth, googleProvider } from './firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { toast } from 'react-hot-toast';
 
 export default function LoginScreen({ onLogin }) {
   const [errorMsg, setErrorMsg] = useState('');
@@ -68,7 +69,7 @@ export default function LoginScreen({ onLogin }) {
         </button>
 
         <div className="login-footer">
-          Al continuar, aceptas nuestros <a href="#" onClick={(e) => { e.preventDefault(); alert("Los Términos de Servicio estarán disponibles próximamente."); }}>Términos de Servicio</a> y <a href="#" onClick={(e) => { e.preventDefault(); alert("La Política de Privacidad estará disponible próximamente."); }}>Política de Privacidad</a>.
+      Al continuar, aceptas nuestros <a href="#" onClick={(e) => { e.preventDefault(); toast("Los Términos de Servicio estarán disponibles próximamente.", { icon: '📄' }); }}>Términos de Servicio</a> y <a href="#" onClick={(e) => { e.preventDefault(); toast("La Política de Privacidad estará disponible próximamente.", { icon: '🛡️' }); }}>Política de Privacidad</a>.
         </div>
       </div>
     </div>

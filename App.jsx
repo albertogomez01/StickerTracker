@@ -13,6 +13,8 @@ import Estadisticas from './Estadisticas';
 import { db, auth } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function App() {
   const [seccionActual, setSeccionActual] = useState('intercambios');
@@ -101,7 +103,7 @@ export default function App() {
             noLeidas.forEach(n => new Notification("Nuevo Intercambio 🔄", { body: n.text, icon: 'https://media.base44.com/images/public/6a2595c43f4f5e19a4497bd1/5bd12f067_logo.png' }));
           } else {
             // Fallback: usar un alert estándar si no dio permisos
-            alert("🔔 Nueva notificación:\n" + noLeidas.map(n => n.text).join('\n'));
+            toast("🔔 Nueva notificación:\n" + noLeidas.map(n => n.text).join('\n'), { icon: '🔔' });
           }
           
           // Marcar como leídas automáticamente en Firestore para no repetir
@@ -189,7 +191,7 @@ export default function App() {
       if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
       return nuevoPerfil;
     });
-    alert(`¡Lista de ${tipo} procesada correctamente!`);
+    toast.success(`¡Lista de ${tipo} procesada correctamente!`);
   };
 
   // Contadores Propios
@@ -249,10 +251,12 @@ export default function App() {
         {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} />}
         {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} />}
         {seccionActual === 'intercambios' && <Intercambios perfil={perfil} />}
-        {seccionActual === 'mercado' && <Mercado perfil={perfil} />}
+        {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} />}
         {seccionActual === 'stats' && <Estadisticas />}
       </div>
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
+      <SpeedInsights />
+      <Toaster position="bottom-center" />
     </div>
 
   );
