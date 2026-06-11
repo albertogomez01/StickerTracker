@@ -292,6 +292,11 @@ export default function App() {
         {seccionActual === 'stats' && <Estadisticas />}
       </div>
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
+      
+      <a href="https://ko-fi.com/tu_usuario" target="_blank" rel="noopener noreferrer" style={{ position: 'fixed', bottom: 'calc(80px + env(safe-area-inset-bottom))', right: '16px', background: '#FF5E5B', color: 'white', padding: '10px 16px', borderRadius: '99px', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 4px 12px rgba(255, 94, 91, 0.4)', zIndex: 999, display: 'flex', alignItems: 'center', gap: '6px' }}>
+        Apoyar proyecto
+      </a>
+
       <SpeedInsights />
       <Toaster position="bottom-center" />
 
