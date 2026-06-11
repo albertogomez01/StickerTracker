@@ -173,6 +173,33 @@ export const ALBUMS = {
       { id: 'LE_UFX', alias: 'UFX', nombre: 'Últimos Fichajes', total: 20 },
       { id: 'LE_EXT', alias: 'EXT', nombre: 'Extra / Otros', total: 178 }
     ]
+  },
+  'copa_america_2024': {
+    id: 'copa_america_2024',
+    nombre: 'Copa América 2024',
+    totalStickers: 430,
+    selecciones: [
+      { id: 'INT', nombre: 'Introducción', total: 4 },
+      { id: 'EST', nombre: 'Estadios', total: 14 },
+      { id: 'ARG', nombre: 'Argentina', total: 22, flagCode: 'ar' },
+      { id: 'PER', nombre: 'Perú', total: 22, flagCode: 'pe' },
+      { id: 'CHI', nombre: 'Chile', total: 22, flagCode: 'cl' },
+      { id: 'CAN', nombre: 'Canadá', total: 22, flagCode: 'ca' },
+      { id: 'MEX', nombre: 'México', total: 22, flagCode: 'mx' },
+      { id: 'ECU', nombre: 'Ecuador', total: 22, flagCode: 'ec' },
+      { id: 'VEN', nombre: 'Venezuela', total: 22, flagCode: 've' },
+      { id: 'JAM', nombre: 'Jamaica', total: 22, flagCode: 'jm' },
+      { id: 'USA', nombre: 'Estados Unidos', total: 22, flagCode: 'us' },
+      { id: 'URU', nombre: 'Uruguay', total: 22, flagCode: 'uy' },
+      { id: 'PAN', nombre: 'Panamá', total: 22, flagCode: 'pa' },
+      { id: 'BOL', nombre: 'Bolivia', total: 22, flagCode: 'bo' },
+      { id: 'BRA', nombre: 'Brasil', total: 22, flagCode: 'br' },
+      { id: 'COL', nombre: 'Colombia', total: 22, flagCode: 'co' },
+      { id: 'PAR', nombre: 'Paraguay', total: 22, flagCode: 'py' },
+      { id: 'CRC', nombre: 'Costa Rica', total: 22, flagCode: 'cr' },
+      { id: 'LEY', nombre: 'Leyendas', total: 16 },
+      { id: 'EXT', nombre: 'Extras', total: 44 }
+    ]
   }
 };
 
