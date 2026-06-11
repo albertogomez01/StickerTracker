@@ -3,7 +3,7 @@ import './App.css';
 import { LOGO_URL } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme }) {
+export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme, cambiarApodo }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -30,6 +30,12 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
     } catch (err) {
       console.log("El usuario canceló el menú de compartir");
     }
+  };
+
+  const handleEditNickname = () => {
+    const nuevoApodo = window.prompt("Introduce tu nuevo apodo para el juego (ej: Alberto48):", perfil.nickname);
+    if (nuevoApodo) cambiarApodo(nuevoApodo);
+    setShowDropdown(false);
   };
 
   return (
@@ -65,6 +71,15 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
           </button>
           {showDropdown && (
             <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '12px', background: 'var(--bg-card)', borderRadius: '14px', padding: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', minWidth: '180px', zIndex: 1001, display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--border-primary)' }}>
+              <div style={{ padding: '8px 12px', cursor: 'default' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>@{perfil.nickname}</div>
+                {perfil.email && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', wordBreak: 'break-all' }}>{perfil.email}</div>}
+              </div>
+              <div style={{ height: '1px', background: 'var(--border-primary)', margin: '0 0 4px 0' }}></div>
+              <button onClick={handleEditNickname} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
+                Editar apodo
+              </button>
+              <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <a href="https://ko-fi.com/stickertracker01" target="_blank" rel="noopener noreferrer" onClick={() => setShowDropdown(false)} style={{ textDecoration: 'none', color: '#FF5E5B', padding: '12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', background: 'rgba(255, 94, 91, 0.1)', textAlign: 'left', display: 'block' }}>
                 Apoyar proyecto
               </a>

@@ -97,8 +97,8 @@ export default function App() {
         setPerfil(prev => {
           if (!prev) return data;
           // Comparamos para evitar bucles si el cambio lo hicimos nosotros mismos en este dispositivo
-          if (JSON.stringify(prev.stickers) !== JSON.stringify(data.stickers)) {
-            return { ...prev, stickers: data.stickers };
+          if (JSON.stringify(prev.stickers) !== JSON.stringify(data.stickers) || prev.nickname !== data.nickname) {
+            return { ...prev, stickers: data.stickers, nickname: data.nickname };
           }
           return prev;
         });
@@ -157,6 +157,26 @@ export default function App() {
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const cambiarApodo = async (nuevoApodo) => {
+    if (!nuevoApodo || nuevoApodo.trim() === '' || nuevoApodo === perfil.nickname) return;
+    const apodoLimpio = nuevoApodo.trim();
+    const nuevoPerfil = { ...perfil, nickname: apodoLimpio };
+    setPerfil(nuevoPerfil);
+    try {
+      await setDoc(doc(db, "usuarios", perfil.id), nuevoPerfil);
+      // Actualizamos también el mercado si el usuario estaba publicado
+      const mercadoRef = doc(db, 'mercado', perfil.id);
+      const mercadoSnap = await getDoc(mercadoRef);
+      if (mercadoSnap.exists()) {
+        await setDoc(mercadoRef, { nickname: apodoLimpio }, { merge: true });
+      }
+      toast.success("Apodo actualizado correctamente.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Error al actualizar el apodo.");
+    }
   };
 
   const handleLogout = async () => {
@@ -258,7 +278,7 @@ export default function App() {
   return (
     <div className="app-container">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
-      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} />
+      <Header perfil={perfil} onLogout={handleLogout} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} />
       
       {installPrompt && (
         <div style={{ background: 'var(--accent-primary)', color: '#FFF', padding: '12px', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '16px 12px 0 12px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
