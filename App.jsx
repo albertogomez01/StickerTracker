@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import './App.css';
 import Confetti from 'react-confetti';
 import { ALBUMS, parsearTextoAStickers, LOGO_URL } from './utils';
 import LoginScreen from './LoginScreen';
 import Header from './Header';
 import Footer from './Footer';
-import Album from './Album';
-import Importar from './Importar';
-import Intercambios from './Intercambios';
-import Mercado from './Mercado';
-import Estadisticas from './Estadisticas';
 import { db, auth } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Toaster, toast } from 'react-hot-toast';
+
+const Album = lazy(() => import('./Album'));
+const Importar = lazy(() => import('./Importar'));
+const Intercambios = lazy(() => import('./Intercambios'));
+const Mercado = lazy(() => import('./Mercado'));
+const Estadisticas = lazy(() => import('./Estadisticas'));
 
 export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -311,11 +312,13 @@ export default function App() {
         </div>
       </div>
       <div className="content-wrapper">
-        {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} albumActivo={albumActivo} />}
-        {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
-        {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} />}
-        {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} />}
-        {seccionActual === 'stats' && <Estadisticas albumActivo={albumActivo} perfil={perfil} />}
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '14px' }}>Cargando sección...</div>}>
+          {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} isMuted={isMuted} albumActivo={albumActivo} />}
+          {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
+          {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} />}
+          {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} />}
+          {seccionActual === 'stats' && <Estadisticas albumActivo={albumActivo} perfil={perfil} />}
+        </Suspense>
       </div>
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
       
