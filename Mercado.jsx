@@ -334,7 +334,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
                   <div key={user.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {user.photoURL ? (
-                        <img src={user.photoURL} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <img src={user.photoURL} alt="" loading="lazy" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{user.nickname.charAt(0).toUpperCase()}</div>
                       )}
@@ -367,7 +367,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
               <div key={solicitud.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {solicitud.fromPhotoURL ? (
-                    <img src={solicitud.fromPhotoURL} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={solicitud.fromPhotoURL} alt="" loading="lazy" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{solicitud.fromNickname.charAt(0).toUpperCase()}</div>
                   )}
@@ -392,7 +392,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
               <div key={solicitud.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {solicitud.toPhotoURL ? (
-                    <img src={solicitud.toPhotoURL} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={solicitud.toPhotoURL} alt="" loading="lazy" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{solicitud.toNickname.charAt(0).toUpperCase()}</div>
                   )}

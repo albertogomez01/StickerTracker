@@ -139,7 +139,7 @@ export default function Estadisticas({ albumActivo, perfil }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontWeight: 'bold', color: index < 3 ? '#F59E0B' : 'var(--text-secondary)', width: '24px' }}>#{index + 1}</span>
                     {u.photoURL ? (
-                      <img src={u.photoURL} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
+                      <img src={u.photoURL} alt="" loading="lazy" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--bg-input)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>{u.nickname.charAt(0).toUpperCase()}</div>
                     )}

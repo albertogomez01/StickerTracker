@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy, useRef } from 'react';
 import './App.css';
 import Confetti from 'react-confetti';
 import { ALBUMS, parsearTextoAStickers, LOGO_URL } from './utils';
@@ -22,6 +22,7 @@ export default function App() {
   const [seccionActual, setSeccionActual] = useState('intercambios');
   const [installPrompt, setInstallPrompt] = useState(null);
   const [albumActivo, setAlbumActivo] = useState(() => localStorage.getItem('panini_album') || 'mundial_2026');
+  const saveTimeoutRef = useRef(null);
   const [perfil, setPerfil] = useState(() => {
     try {
       const guardado = localStorage.getItem('panini_perfil');
@@ -330,8 +331,12 @@ export default function App() {
       const valor = copia[codigo] !== undefined ? copia[codigo] : 0;
       copia[codigo] = valor === 0 ? 1 : valor === 1 ? 2 : valor < 11 ? valor + 1 : 0;
       const nuevoPerfil = { ...prev, stickers: copia };
-      // Guardamos en la nube inmediatamente al hacer clic
-      if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      
+      // Agrupamos las escrituras a la base de datos (Debounce) para ahorrar cuota
+      if (nuevoPerfil.id) {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e)), 1500);
+      }
       return nuevoPerfil;
     });
   };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ALBUMS } from './utils';
 
 let globalAudioCtx = null;
@@ -49,26 +49,28 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
   const renderDigitalFlag = (sel) => {
     if (sel.id === 'FWC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Copa</span>;
     if (sel.id === 'CC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>CC</span>;
-    if (sel.flagCode) return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
+    if (sel.flagCode) return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" loading="lazy" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
     return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⚽</span>;
   };
 
   // Filtramos las selecciones para ocultar los países que no tienen cromos que coincidan
-  const seleccionesFiltradas = (ALBUMS[albumActivo] || ALBUMS['mundial_2026']).selecciones.filter(sel => {
-    if (busquedaAlbum.trim() !== '') {
-      const termino = busquedaAlbum.toLowerCase();
-      if (!sel.nombre.toLowerCase().includes(termino) && !sel.id.toLowerCase().includes(termino)) {
-        return false;
+  const seleccionesFiltradas = useMemo(() => {
+    return (ALBUMS[albumActivo] || ALBUMS['mundial_2026']).selecciones.filter(sel => {
+      if (busquedaAlbum.trim() !== '') {
+        const termino = busquedaAlbum.toLowerCase();
+        if (!sel.nombre.toLowerCase().includes(termino) && !sel.id.toLowerCase().includes(termino)) {
+          return false;
+        }
       }
-    }
-    if (filtro === 'todos') return true;
-    for (let i = 0; i < sel.total; i++) {
-      const estado = perfil.stickers?.[`${sel.id}_${i.toString().padStart(2, '0')}`] || 0;
-      if (filtro === 'faltantes' && estado === 0) return true;
-      if (filtro === 'repetidos' && estado >= 2) return true;
-    }
-    return false;
-  });
+      if (filtro === 'todos') return true;
+      for (let i = 0; i < sel.total; i++) {
+        const estado = perfil.stickers?.[`${sel.id}_${i.toString().padStart(2, '0')}`] || 0;
+        if (filtro === 'faltantes' && estado === 0) return true;
+        if (filtro === 'repetidos' && estado >= 2) return true;
+      }
+      return false;
+    });
+  }, [albumActivo, busquedaAlbum, filtro, perfil.stickers]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
