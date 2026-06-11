@@ -110,8 +110,8 @@ export default function App() {
         setPerfil(prev => {
           if (!prev) return data;
           // Comparamos para evitar bucles si el cambio lo hicimos nosotros mismos en este dispositivo
-          if (JSON.stringify(prev.stickers) !== JSON.stringify(data.stickers) || prev.nickname !== data.nickname) {
-            return { ...prev, stickers: data.stickers, nickname: data.nickname };
+          if (JSON.stringify(prev.stickers) !== JSON.stringify(data.stickers) || prev.nickname !== data.nickname || prev.photoURL !== data.photoURL) {
+            return { ...prev, stickers: data.stickers, nickname: data.nickname, photoURL: data.photoURL };
           }
           return prev;
         });
@@ -313,7 +313,7 @@ export default function App() {
         setPerfil(docSnap.data()); // ☁️ Carga los datos existentes de la nube
       } else {
         // 🆕 Crea un perfil nuevo en la base de datos si es su primera vez
-        const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', stickers: {} };
+        const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', photoURL: user.photoURL || null, stickers: {} };
         await setDoc(userRef, nuevoPerfil);
         setPerfil(nuevoPerfil);
       }
