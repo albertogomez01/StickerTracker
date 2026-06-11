@@ -3,7 +3,7 @@ import './App.css';
 import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo }) {
+export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
@@ -86,7 +86,8 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartir</span>
         </button>
         <div style={{ position: 'relative' }}>
-          <button onClick={() => { setShowDropdown(!showDropdown); setShowAlbumDropdown(false); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '99px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'background 0.2s' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+          <button onClick={() => { setShowDropdown(!showDropdown); setShowAlbumDropdown(false); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '99px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'background 0.2s', position: 'relative' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+            {updateAvailable && <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', background: '#EF4444', borderRadius: '50%' }}></div>}
             {perfil.photoURL && <img src={perfil.photoURL} alt="" style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover', margin: '-2px 0' }} />}
             @{perfil.nickname} <span style={{ fontSize: '10px' }}>{showDropdown ? '▲' : '▼'}</span>
           </button>
@@ -111,6 +112,16 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 Cambiar foto
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { cambiarFoto(e); setShowDropdown(false); }} />
               </label>
+              {(updateAvailable || installPrompt) && <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>}
+              {updateAvailable ? (
+                <button onClick={() => window.location.reload()} style={{ background: 'var(--accent-primary)', border: 'none', color: 'white', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
+                  Actualizar aplicación
+                </button>
+              ) : installPrompt ? (
+                <button onClick={async () => { installPrompt.prompt(); const { outcome } = await installPrompt.userChoice; if(outcome === 'accepted') setInstallPrompt(null); setShowDropdown(false); }} style={{ background: 'var(--bg-input)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
+                  Instalar aplicación
+                </button>
+              ) : null}
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <a href="https://ko-fi.com/stickertracker01" target="_blank" rel="noopener noreferrer" onClick={() => setShowDropdown(false)} style={{ textDecoration: 'none', color: '#FF5E5B', padding: '12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', background: 'rgba(255, 94, 91, 0.1)', textAlign: 'left', display: 'block' }}>
                 Apoyar proyecto
