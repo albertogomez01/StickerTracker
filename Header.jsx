@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import { LOGO_URL } from './utils';
+import { toast } from 'react-hot-toast';
 
 export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
@@ -10,6 +11,25 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
     if (isLogoAnimating) return; // Evita re-animar si ya está en curso
     setIsLogoAnimating(true);
     setTimeout(() => setIsLogoAnimating(false), 500); // Debe coincidir con la duración de la animación
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Sticker Tracker - Mundial 2026',
+      text: 'Únete a Sticker Tracker y completemos juntos el álbum del Mundial 2026.',
+      url: 'https://sticker-tracker01.vercel.app/'
+    };
+    
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success("Enlace copiado al portapapeles.");
+      }
+    } catch (err) {
+      console.log("El usuario canceló el menú de compartir");
+    }
   };
 
   return (
@@ -35,6 +55,9 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
           ) : (
             <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span>Sonido</span></>
           )}
+        </button>
+        <button onClick={handleShare} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.4)', color: 'white', borderRadius: '10px', padding: '4px 8px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold', transition: 'background 0.2s', display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', justifyContent: 'center' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'} aria-label="Compartir">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartir</span>
         </button>
         <div style={{ position: 'relative' }}>
           <button onClick={() => setShowDropdown(!showDropdown)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '99px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'background 0.2s' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
