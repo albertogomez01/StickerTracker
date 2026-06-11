@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, getDoc, query, where, onSnapshot, limit, orderBy, addDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { SELECCIONES } from './utils';
+import { ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
 const REGIONES_ESPANA = {
@@ -24,7 +24,7 @@ const REGIONES_ESPANA = {
   "País Vasco": ["Bilbao", "Vitoria-Gasteiz", "San Sebastián", "Barakaldo"]
 };
 
-export default function Mercado({ perfil, setSeccionActual }) {
+export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
   const [usuariosMercado, setUsuariosMercado] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [solicitudesEnviadas, setSolicitudesEnviadas] = useState([]);
@@ -38,14 +38,26 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const [showFormQuedada, setShowFormQuedada] = useState(false);
   const [nuevaQuedada, setNuevaQuedada] = useState({ titulo: '', lugar: '', fecha: '' });
 
+  // Función mágica para separar bases de datos sin romper a los usuarios antiguos
+  const getCol = (base) => albumActivo === 'mundial_2026' ? base : `${base}_${albumActivo}`;
+
+  useEffect(() => {
+    setUsuariosMercado([]);
+    setBusquedaMercado('');
+    setComunidadActiva('');
+    setCiudadActiva('');
+    setQuedadas([]);
+    setTab('explorar');
+  }, [albumActivo]);
+
   useEffect(() => {
     if (!perfil?.id) return;
-    getDoc(doc(db, 'mercado', perfil.id)).then(snap => {
+    getDoc(doc(db, getCol('mercado'), perfil.id)).then(snap => {
       setPublicado(snap.exists());
     });
 
     // Escuchar solicitudes pendientes entrantes en tiempo real
-    const q = query(collection(db, 'solicitudes'), where('to', '==', perfil.id), where('status', '==', 'pending'));
+    const q = query(collection(db, getCol('solicitudes')), where('to', '==', perfil.id), where('status', '==', 'pending'));
     const unsub = onSnapshot(q, (snap) => {
       const reqs = [];
       snap.forEach(d => reqs.push({ id: d.id, ...d.data() }));
@@ -53,21 +65,21 @@ export default function Mercado({ perfil, setSeccionActual }) {
     });
 
     // Escuchar solicitudes pendientes salientes (enviadas) en tiempo real
-    const qEnviadas = query(collection(db, 'solicitudes'), where('from', '==', perfil.id), where('status', '==', 'pending'));
+    const qEnviadas = query(collection(db, getCol('solicitudes')), where('from', '==', perfil.id), where('status', '==', 'pending'));
     const unsubEnviadas = onSnapshot(qEnviadas, (snap) => {
       const reqs = [];
       snap.forEach(d => reqs.push({ id: d.id, ...d.data() }));
       setSolicitudesEnviadas(reqs);
     });
     return () => { unsub(); unsubEnviadas(); };
-  }, [perfil?.id]);
+  }, [perfil?.id, albumActivo]);
 
   useEffect(() => {
     if (!ciudadActiva) {
       setQuedadas([]);
       return;
     }
-    const qQuedadas = query(collection(db, 'quedadas'), where('ciudad', '==', ciudadActiva));
+    const qQuedadas = query(collection(db, getCol('quedadas')), where('ciudad', '==', ciudadActiva));
     const unsubQuedadas = onSnapshot(qQuedadas, (snap) => {
       const list = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() }));
@@ -75,17 +87,17 @@ export default function Mercado({ perfil, setSeccionActual }) {
       setQuedadas(list);
     });
     return () => unsubQuedadas();
-  }, [ciudadActiva]);
+  }, [ciudadActiva, albumActivo]);
 
   const togglePublicar = async () => {
     setLoading(true);
     try {
       if (publicado) {
-        await deleteDoc(doc(db, 'mercado', perfil.id));
+        await deleteDoc(doc(db, getCol('mercado'), perfil.id));
         setPublicado(false);
         toast.success("Tu perfil ya no es visible en el mercado.");
       } else {
-        await setDoc(doc(db, 'mercado', perfil.id), {
+        await setDoc(doc(db, getCol('mercado'), perfil.id), {
           nickname: perfil.nickname,
           stickers: perfil.stickers,
           timestamp: Date.now()
@@ -103,7 +115,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const buscarMatches = async () => {
     setLoading(true);
     try {
-      const qMercado = query(collection(db, 'mercado'), orderBy('timestamp', 'desc'), limit(50));
+      const qMercado = query(collection(db, getCol('mercado')), orderBy('timestamp', 'desc'), limit(50));
       const querySnapshot = await getDocs(qMercado);
       const matches = [];
 
@@ -114,7 +126,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
         let leDoy = 0;
         let meDa = 0;
 
-        SELECCIONES.forEach(sel => {
+        ALBUMS[albumActivo].selecciones.forEach(sel => {
           for (let i = 0; i < sel.total; i++) {
             const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
             const miSticker = perfil?.stickers?.[cod] || 0;
@@ -145,7 +157,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const enviarSolicitud = async (matchUser) => {
     try {
       const solicitudId = `${perfil.id}_${matchUser.id}`;
-      const solRef = doc(db, 'solicitudes', solicitudId);
+      const solRef = doc(db, getCol('solicitudes'), solicitudId);
       const solSnap = await getDoc(solRef);
       if (solSnap.exists() && solSnap.data().status === 'pending') {
         return toast.error("Ya has enviado una solicitud pendiente a este usuario.");
@@ -169,7 +181,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const generarRawListas = (stickersObj) => {
     let faltantes = [];
     let repetidos = [];
-    SELECCIONES.forEach(sel => {
+    ALBUMS[albumActivo].selecciones.forEach(sel => {
       let fSel = [];
       let rSel = [];
       for (let i = 0; i < sel.total; i++) {
@@ -187,15 +199,15 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const aceptarSolicitud = async (solicitud) => {
     try {
       // 1. Marcar la solicitud como aceptada
-      await setDoc(doc(db, 'solicitudes', solicitud.id), { status: 'accepted' }, { merge: true });
+      await setDoc(doc(db, getCol('solicitudes'), solicitud.id), { status: 'accepted' }, { merge: true });
 
       // 2. Descargar las estadísticas y añadirlo a mi lista de amigos
-      const misAmigosRef = doc(db, 'amigos', perfil.id);
+      const misAmigosRef = doc(db, getCol('amigos'), perfil.id);
       const miSnap = await getDoc(misAmigosRef);
       let miLista = miSnap.exists() ? (miSnap.data().lista || []) : [];
       
       if (!miLista.some(u => u.id === solicitud.from)) {
-        const mercadoSnap = await getDoc(doc(db, 'mercado', solicitud.from));
+        const mercadoSnap = await getDoc(doc(db, getCol('mercado'), solicitud.from));
         const dataMercado = mercadoSnap.exists() ? mercadoSnap.data() : { stickers: {} };
         const { rawFaltantes, rawRepetidos } = generarRawListas(dataMercado.stickers);
         miLista.unshift({ id: solicitud.from, nickname: solicitud.fromNickname, stickers: dataMercado.stickers, rawFaltantes, rawRepetidos });
@@ -203,7 +215,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
       }
 
       // 3. Añadirme automáticamente a su lista de amigos
-      const susAmigosRef = doc(db, 'amigos', solicitud.from);
+      const susAmigosRef = doc(db, getCol('amigos'), solicitud.from);
       const suSnap = await getDoc(susAmigosRef);
       let suLista = suSnap.exists() ? (suSnap.data().lista || []) : [];
       
@@ -232,7 +244,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const rechazarSolicitud = async (solicitudId) => {
     if(!window.confirm("¿Rechazar esta solicitud?")) return;
     try {
-      await deleteDoc(doc(db, 'solicitudes', solicitudId));
+      await deleteDoc(doc(db, getCol('solicitudes'), solicitudId));
     } catch (e) {
       console.error(e);
       toast.error("Error al rechazar solicitud.");
@@ -242,7 +254,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const cancelarSolicitud = async (solicitudId) => {
     if(!window.confirm("¿Seguro que quieres cancelar esta solicitud enviada?")) return;
     try {
-      await deleteDoc(doc(db, 'solicitudes', solicitudId));
+      await deleteDoc(doc(db, getCol('solicitudes'), solicitudId));
     } catch (e) {
       console.error(e);
       toast.error("Error al cancelar solicitud.");
@@ -253,7 +265,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
     e.preventDefault();
     if (!nuevaQuedada.titulo || !nuevaQuedada.lugar || !nuevaQuedada.fecha) return toast.error("Rellena todos los campos.");
     try {
-      await addDoc(collection(db, 'quedadas'), {
+      await addDoc(collection(db, getCol('quedadas')), {
         ciudad: ciudadActiva,
         titulo: nuevaQuedada.titulo,
         lugar: nuevaQuedada.lugar,
@@ -273,7 +285,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
   };
 
   const toggleAsistencia = async (quedada) => {
-    const ref = doc(db, 'quedadas', quedada.id);
+    const ref = doc(db, getCol('quedadas'), quedada.id);
     const voy = quedada.asistentes?.includes(perfil.id);
     try {
       await updateDoc(ref, {

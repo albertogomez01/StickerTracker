@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import { db } from './firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { SELECCIONES } from './utils';
+import { ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Estadisticas() {
+export default function Estadisticas({ albumActivo }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const getCol = (base) => albumActivo === 'mundial_2026' ? base : `${base}_${albumActivo}`;
+
+  useEffect(() => {
+    setStats(null);
+  }, [albumActivo]);
 
   const calcularEstadisticas = async () => {
     setLoading(true);
     setStats(null);
     try {
-      const qStats = query(collection(db, 'mercado'), orderBy('timestamp', 'desc'), limit(100));
+      const qStats = query(collection(db, getCol('mercado')), orderBy('timestamp', 'desc'), limit(100));
       const mercadoSnapshot = await getDocs(qStats);
       const totalUsuarios = mercadoSnapshot.size;
       
@@ -34,7 +40,7 @@ export default function Estadisticas() {
       });
 
       const allStickersStats = [];
-      SELECCIONES.forEach(sel => {
+      ALBUMS[albumActivo].selecciones.forEach(sel => {
         for (let i = 0; i < sel.total; i++) {
           const codigo = `${sel.id}_${i.toString().padStart(2, '0')}`;
           const count = stickerCounts[codigo] || 0;

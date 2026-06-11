@@ -6,11 +6,15 @@ import { toast } from 'react-hot-toast';
 export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, albumActivo, setAlbumActivo }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
 
   const handleLogoClick = () => {
-    if (isLogoAnimating) return; // Evita re-animar si ya está en curso
-    setIsLogoAnimating(true);
-    setTimeout(() => setIsLogoAnimating(false), 500); // Debe coincidir con la duración de la animación
+    setShowAlbumDropdown(!showAlbumDropdown);
+    setShowDropdown(false);
+    if (!isLogoAnimating) {
+      setIsLogoAnimating(true);
+      setTimeout(() => setIsLogoAnimating(false), 500);
+    }
   };
 
   const handleShare = async () => {
@@ -40,19 +44,28 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
 
   return (
     <div className="header">
-      <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
-        <img src={LOGO_URL} alt="Logo" className={`header-logo ${isLogoAnimating ? 'logo-spin' : ''}`} />
-        <div>
-          <div style={{ position: 'relative', width: 'fit-content' }}>
-            <select value={albumActivo} onChange={(e) => setAlbumActivo(e.target.value)} style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '18px', fontWeight: 'bold', appearance: 'none', cursor: 'pointer', outline: 'none', margin: 0, padding: '0 14px 0 0' }}>
-              {Object.values(ALBUMS).map(album => (
-                <option key={album.id} value={album.id} style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>{album.nombre}</option>
-              ))}
-            </select>
-            <span style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '10px', opacity: 0.8 }}>▼</span>
+      <div style={{ position: 'relative' }}>
+        <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none', padding: '6px', borderRadius: '12px', transition: 'background 0.2s', margin: '-6px' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onPointerUp={(e) => e.currentTarget.style.background = 'transparent'}>
+          <img src={LOGO_URL} alt="Logo" className={`header-logo ${isLogoAnimating ? 'logo-spin' : ''}`} />
+          <div>
+            <div style={{ fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', color: 'white' }}>
+              {ALBUMS[albumActivo]?.nombre || 'Mundial 2026'} <span style={{ fontSize: '10px', opacity: 0.8 }}>▼</span>
+            </div>
+            <div style={{ opacity: 0.85, fontSize: '11px', marginTop: '-2px', color: 'white' }}>Gestor Cromos</div>
           </div>
-          <div style={{ opacity: 0.85, fontSize: '11px', marginTop: '-2px' }}>Gestor Cromos</div>
         </div>
+        
+        {showAlbumDropdown && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '16px', background: 'var(--bg-card)', borderRadius: '14px', padding: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', minWidth: '240px', zIndex: 1001, display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--border-primary)' }}>
+            <div style={{ padding: '8px', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Selecciona tu Colección</div>
+            {Object.values(ALBUMS).map(album => (
+              <button key={album.id} onClick={() => { setAlbumActivo(album.id); setShowAlbumDropdown(false); }} style={{ background: albumActivo === album.id ? 'var(--bg-input)' : 'transparent', border: 'none', color: albumActivo === album.id ? 'var(--accent-primary)' : 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', textAlign: 'left', transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onPointerDown={(e) => e.currentTarget.style.background = 'var(--border-primary)'} onPointerUp={(e) => e.currentTarget.style.background = albumActivo === album.id ? 'var(--bg-input)' : 'transparent'}>
+                {album.nombre}
+                {albumActivo === album.id && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={toggleTheme} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.4)', color: 'white', borderRadius: '10px', padding: '4px 8px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold', transition: 'background 0.2s', display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', justifyContent: 'center' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'} aria-label="Alternar tema">
@@ -73,7 +86,7 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Compartir</span>
         </button>
         <div style={{ position: 'relative' }}>
-          <button onClick={() => setShowDropdown(!showDropdown)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '99px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'background 0.2s' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+          <button onClick={() => { setShowDropdown(!showDropdown); setShowAlbumDropdown(false); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: '99px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'background 0.2s' }} onPointerDown={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onPointerUp={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
             @{perfil.nickname} <span style={{ fontSize: '10px' }}>{showDropdown ? '▲' : '▼'}</span>
           </button>
           {showDropdown && (

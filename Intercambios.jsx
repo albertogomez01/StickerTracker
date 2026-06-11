@@ -1,46 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { parsearTextoAStickers, SELECCIONES } from './utils';
+import { parsearTextoAStickers, ALBUMS } from './utils';
 import AmigoCard from './AmigoCard';
 import { db } from './firebase';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
-export default function Intercambios({ perfil }) {
+export default function Intercambios({ perfil, albumActivo }) {
   const [comunidadUsuarios, setComunidadUsuarios] = useState([]);
   const [datosCargados, setDatosCargados] = useState(false);
   const [nuevoAmigoNombre, setNuevoAmigoNombre] = useState('');
   const [busquedaAmigo, setBusquedaAmigo] = useState('');
   const [soloCompatibles, setSoloCompatibles] = useState(false);
 
+  const getCol = (base) => albumActivo === 'mundial_2026' ? base : `${base}_${albumActivo}`;
+  const localKey = albumActivo === 'mundial_2026' ? 'panini_amigos' : `panini_amigos_${albumActivo}`;
+
+  useEffect(() => {
+    setBusquedaAmigo('');
+    setNuevoAmigoNombre('');
+    setSoloCompatibles(false);
+  }, [albumActivo]);
+
   useEffect(() => {
     if (!perfil?.id) {
       setDatosCargados(true);
       return;
     }
+    setDatosCargados(false); // Reset para evitar que guarde basura al cambiar
     
     // 🎧 Escuchamos la lista de amigos en tiempo real
-    const unsub = onSnapshot(doc(db, "amigos", perfil.id), (docSnap) => {
+    const unsub = onSnapshot(doc(db, getCol("amigos"), perfil.id), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data().lista || [];
         setComunidadUsuarios(prev => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
       } else {
-        const guardado = localStorage.getItem('panini_amigos');
+        const guardado = localStorage.getItem(localKey);
         if (guardado) setComunidadUsuarios(JSON.parse(guardado));
+        else setComunidadUsuarios([]);
       }
       setDatosCargados(true);
     });
     return () => unsub();
-  }, [perfil?.id]);
+  }, [perfil?.id, albumActivo]);
 
   useEffect(() => {
     if (!datosCargados) return; // No guardamos hasta haber cargado primero
     try {
-      localStorage.setItem('panini_amigos', JSON.stringify(comunidadUsuarios));
+      localStorage.setItem(localKey, JSON.stringify(comunidadUsuarios));
     } catch (error) { console.error("Error al guardar amigos:", error); }
-  }, [comunidadUsuarios, datosCargados]);
+  }, [comunidadUsuarios, datosCargados, localKey]);
 
   const guardarEnNube = (nuevaLista) => {
-    if (perfil?.id) setDoc(doc(db, "amigos", perfil.id), { lista: nuevaLista }).catch(e => console.error(e));
+    if (perfil?.id) setDoc(doc(db, getCol("amigos"), perfil.id), { lista: nuevaLista }).catch(e => console.error(e));
   };
 
   const añadirAmigoNuevo = (e) => {
@@ -72,8 +83,8 @@ export default function Intercambios({ perfil }) {
     setComunidadUsuarios(prev => {
       const nueva = prev.map(u => {
         if (u.id === idAmigo) {
-          let nuevosStickers = parsearTextoAStickers(faltantes, 'faltantes', {});
-          nuevosStickers = parsearTextoAStickers(repetidos, 'repetidos', nuevosStickers);
+          let nuevosStickers = parsearTextoAStickers(faltantes, 'faltantes', albumActivo, u.stickers || {});
+          nuevosStickers = parsearTextoAStickers(repetidos, 'repetidos', albumActivo, nuevosStickers);
           return { ...u, stickers: nuevosStickers, rawFaltantes: faltantes, rawRepetidos: repetidos, avatarColor };
         }
         return u;
@@ -89,7 +100,7 @@ export default function Intercambios({ perfil }) {
 
     if (soloCompatibles) {
       let compatible = false;
-      for (const sel of SELECCIONES) {
+      for (const sel of ALBUMS[albumActivo].selecciones) {
         for (let i = 0; i < sel.total; i++) {
           const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
           const miEstado = perfil?.stickers?.[cod] || 0;
@@ -131,6 +142,7 @@ export default function Intercambios({ perfil }) {
             perfil={perfil} 
             onGuardar={guardarListasAmigo} 
             onEliminar={eliminarAmigo} 
+            albumActivo={albumActivo}
           />
         ))
       )}
