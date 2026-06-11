@@ -13,7 +13,7 @@ const AVATAR_COLORS = [
   { bg: '#F3F4F6', text: '#374151' }, // Gris
 ];
 
-export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
+export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumActivo, onOpenChat }) {
   const [isEditing, setIsEditing] = useState(false);
   const [faltantesInput, setFaltantesInput] = useState(amigo.rawFaltantes || '');
   const [repetidosInput, setRepetidosInput] = useState(amigo.rawRepetidos || '');
@@ -146,6 +146,7 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar }) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button onClick={() => onOpenChat(amigo)} className="btn-primary" style={{ flex: '1 1 100%', background: '#3B82F6', color: '#FFF' }}>Abrir Chat Privado</button>
             <button onClick={() => { setFaltantesInput(amigo.rawFaltantes || ''); setRepetidosInput(amigo.rawRepetidos || ''); setColorInput(amigo.avatarColor || AVATAR_COLORS[0]); setIsEditing(true); }} className="btn-secondary" style={{ flex: '1 1 30%' }}>Editar</button>
             <button onClick={() => generarImagenTrueque(perfil?.nickname || 'Yo', amigo.nickname, realesLeDoy.map(x=>x.tag), realesElMeDa.map(x=>x.tag))} className="btn-primary" style={{ flex: '1 1 50%' }}>Compartir</button>
             <button onClick={() => onEliminar(amigo.id)} className="btn-danger" style={{ flex: '1 1 100%' }}>Eliminar</button>

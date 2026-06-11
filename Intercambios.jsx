@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { parsearTextoAStickers, ALBUMS } from './utils';
 import AmigoCard from './AmigoCard';
 import { db } from './firebase';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 export default function Intercambios({ perfil, albumActivo }) {
@@ -11,6 +11,11 @@ export default function Intercambios({ perfil, albumActivo }) {
   const [nuevoAmigoNombre, setNuevoAmigoNombre] = useState('');
   const [busquedaAmigo, setBusquedaAmigo] = useState('');
   const [soloCompatibles, setSoloCompatibles] = useState(false);
+  
+  const [chatAmigo, setChatAmigo] = useState(null);
+  const [mensajes, setMensajes] = useState([]);
+  const [nuevoMensaje, setNuevoMensaje] = useState('');
+  const messagesEndRef = useRef(null);
 
   const getCol = (base) => albumActivo === 'mundial_2026' ? base : `${base}_${albumActivo}`;
   const localKey = albumActivo === 'mundial_2026' ? 'panini_amigos' : `panini_amigos_${albumActivo}`;
@@ -42,6 +47,46 @@ export default function Intercambios({ perfil, albumActivo }) {
     });
     return () => unsub();
   }, [perfil?.id, albumActivo]);
+
+  useEffect(() => {
+    if (!chatAmigo || !perfil?.id) return;
+    const chatId = [perfil.id, chatAmigo.id].sort().join('_');
+    const q = query(collection(db, getCol('chats'), chatId, 'mensajes'), orderBy('timestamp', 'asc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const msgs = [];
+      snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
+      setMensajes(msgs);
+    });
+    return () => unsub();
+  }, [chatAmigo, perfil?.id, albumActivo]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [mensajes]);
+
+  const enviarMensaje = async (e) => {
+    e.preventDefault();
+    if (!nuevoMensaje.trim()) return;
+    const chatId = [perfil.id, chatAmigo.id].sort().join('_');
+    const textoMensaje = nuevoMensaje.trim();
+    setNuevoMensaje(''); 
+    try {
+      await addDoc(collection(db, getCol('chats'), chatId, 'mensajes'), {
+        text: textoMensaje,
+        from: perfil.id,
+        timestamp: Date.now()
+      });
+      
+      const notifRef = doc(db, 'notificaciones', chatAmigo.id);
+      const notifSnap = await getDoc(notifRef);
+      let notifs = notifSnap.exists() ? (notifSnap.data().lista || []) : [];
+      notifs.push({ id: Date.now().toString(), text: `@${perfil.nickname} te ha enviado un mensaje.`, read: false });
+      await setDoc(notifRef, { lista: notifs });
+    } catch(err) {
+      console.error(err);
+      toast.error("Error al enviar el mensaje");
+    }
+  };
 
   useEffect(() => {
     if (!datosCargados) return; // No guardamos hasta haber cargado primero
@@ -117,6 +162,39 @@ export default function Intercambios({ perfil, albumActivo }) {
     return true;
   });
 
+  if (chatAmigo) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 180px)' }}>
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', marginBottom: '8px' }}>
+          <button onClick={() => setChatAmigo(null)} className="btn-secondary" style={{ padding: '6px 12px' }}>Volver</button>
+          <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Chat con @{chatAmigo.nickname}</div>
+        </div>
+        <div className="card" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', marginBottom: '8px' }}>
+          {mensajes.length === 0 ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px', marginTop: '20px' }}>No hay mensajes. Escribe algo para empezar.</div>
+          ) : (
+            mensajes.map(m => {
+              const isMe = m.from === perfil.id;
+              return (
+                <div key={m.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', background: isMe ? 'var(--accent-primary)' : 'var(--bg-input)', color: isMe ? 'white' : 'var(--text-primary)', padding: '8px 12px', borderRadius: '12px', maxWidth: '80%', fontSize: '14px', borderBottomRightRadius: isMe ? '2px' : '12px', borderBottomLeftRadius: isMe ? '12px' : '2px' }}>
+                  {m.text}
+                  <div style={{ fontSize: '10px', opacity: 0.7, textAlign: 'right', marginTop: '4px' }}>
+                    {new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        <form onSubmit={enviarMensaje} style={{ display: 'flex', gap: '8px' }}>
+          <input type="text" value={nuevoMensaje} onChange={e => setNuevoMensaje(e.target.value)} className="input-field" placeholder="Escribe un mensaje..." style={{ flex: 1, padding: '12px 14px' }} />
+          <button type="submit" className="btn-primary" style={{ padding: '12px 20px' }}>Enviar</button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div className="card">
@@ -143,6 +221,7 @@ export default function Intercambios({ perfil, albumActivo }) {
             onGuardar={guardarListasAmigo} 
             onEliminar={eliminarAmigo} 
             albumActivo={albumActivo}
+            onOpenChat={setChatAmigo}
           />
         ))
       )}
