@@ -11,6 +11,7 @@ export default function Mercado({ perfil, setSeccionActual }) {
   const [publicado, setPublicado] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState('explorar');
+  const [busquedaMercado, setBusquedaMercado] = useState('');
 
   useEffect(() => {
     if (!perfil?.id) return;
@@ -208,6 +209,8 @@ export default function Mercado({ perfil, setSeccionActual }) {
     }
   };
 
+  const usuariosFiltrados = usuariosMercado.filter(u => u.nickname.toLowerCase().includes(busquedaMercado.toLowerCase()));
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div className="card" style={{ display: 'flex', gap: '8px', padding: '12px' }}>
@@ -230,16 +233,21 @@ export default function Mercado({ perfil, setSeccionActual }) {
           </div>
           {usuariosMercado.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <h4 style={{ margin: '0 4px', fontSize: '14px', color: 'var(--text-secondary)' }}>Resultados ({usuariosMercado.length})</h4>
-              {usuariosMercado.map(user => (
-                <div key={user.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
-                  <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{user.nickname}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Me da: <span style={{ color: '#D97706', fontWeight: 'bold' }}>{user.meDa}</span> | Le doy: <span style={{ color: '#059669', fontWeight: 'bold' }}>{user.leDoy}</span></div>
+              <input type="text" value={busquedaMercado} onChange={(e) => setBusquedaMercado(e.target.value)} placeholder="Filtrar por nombre..." className="input-field" style={{ padding: '10px 14px', fontSize: '14px' }} />
+              <h4 style={{ margin: '0 4px', fontSize: '14px', color: 'var(--text-secondary)' }}>Resultados ({usuariosFiltrados.length})</h4>
+              {usuariosFiltrados.length === 0 ? (
+                <div className="card" style={{ textAlign: 'center', color: '#94A3B8', fontSize: '14px', padding: '16px' }}>No se encontraron usuarios con ese nombre.</div>
+              ) : (
+                usuariosFiltrados.map(user => (
+                  <div key={user.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
+                    <div>
+                      <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{user.nickname}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Me da: <span style={{ color: '#D97706', fontWeight: 'bold' }}>{user.meDa}</span> | Le doy: <span style={{ color: '#059669', fontWeight: 'bold' }}>{user.leDoy}</span></div>
+                    </div>
+                    <button onClick={() => enviarSolicitud(user)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '10px' }}>✉️ Solicitar</button>
                   </div>
-                  <button onClick={() => enviarSolicitud(user)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '10px' }}>✉️ Solicitar</button>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
         </>
