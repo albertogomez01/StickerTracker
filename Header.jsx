@@ -56,7 +56,7 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
         </div>
         
         {showAlbumDropdown && (
-          <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '16px', background: 'var(--bg-card)', borderRadius: '14px', padding: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', minWidth: '240px', zIndex: 1001, display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--border-primary)' }}>
+          <div className="animate-fade-in" style={{ position: 'absolute', top: '100%', left: 0, marginTop: '16px', background: 'var(--bg-card)', borderRadius: '14px', padding: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', minWidth: '240px', zIndex: 1001, display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--border-primary)' }}>
             <div style={{ padding: '8px', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Selecciona tu Colección</div>
             {Object.values(ALBUMS).map(album => (
               <button key={album.id} onClick={() => { setAlbumActivo(album.id); setShowAlbumDropdown(false); }} style={{ background: albumActivo === album.id ? 'var(--bg-input)' : 'transparent', border: 'none', color: albumActivo === album.id ? 'var(--accent-primary)' : 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', textAlign: 'left', transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onPointerDown={(e) => e.currentTarget.style.background = 'var(--border-primary)'} onPointerUp={(e) => e.currentTarget.style.background = albumActivo === album.id ? 'var(--bg-input)' : 'transparent'}>
@@ -91,7 +91,7 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
             @{perfil.nickname} <span style={{ fontSize: '10px' }}>{showDropdown ? '▲' : '▼'}</span>
           </button>
           {showDropdown && (
-            <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '12px', background: 'var(--bg-card)', borderRadius: '14px', padding: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', minWidth: '180px', zIndex: 1001, display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--border-primary)' }}>
+            <div className="animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '12px', background: 'var(--bg-card)', borderRadius: '14px', padding: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', minWidth: '180px', zIndex: 1001, display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid var(--border-primary)' }}>
               <div style={{ padding: '8px 12px', cursor: 'default', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {perfil.photoURL ? (
                   <img src={perfil.photoURL} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />

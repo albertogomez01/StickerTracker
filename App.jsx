@@ -453,7 +453,16 @@ export default function App() {
       <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
       
       <SpeedInsights />
-      <Toaster position="bottom-center" />
+      <Toaster 
+        position="bottom-center" 
+        toastOptions={{
+          style: {
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-primary)'
+          }
+        }}
+      />
 
       {showTutorial && (
         <div className="modal-overlay">

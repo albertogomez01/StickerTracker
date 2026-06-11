@@ -281,6 +281,24 @@ input, textarea, button, select, a {
   user-select: none;
 }
 
+/* Mejoras para el botón de Peligro en Modo Oscuro */
+[data-theme='dark'] .btn-danger {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #F87171;
+}
+
+[data-theme='dark'] .btn-danger:active {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+/* Efectos Hover solo para dispositivos con ratón (PC) */
+@media (hover: hover) {
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-secondary:hover { background: var(--bg-input); }
+  .btn-danger:hover { filter: brightness(0.95); }
+}
+
 .btn-danger:active {
   transform: scale(0.96);
   background: #FEE2E2;
@@ -290,9 +308,10 @@ input, textarea, button, select, a {
   background: var(--bg-card);
   border-radius: 20px;
   padding: 16px;
-  border: none;
+  border: 1px solid var(--border-primary);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   margin-bottom: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .modal-overlay {
@@ -311,6 +330,12 @@ input, textarea, button, select, a {
 .modal-content {
   width: 100%;
   max-width: 400px;
+  animation: modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modal-pop {
+  0% { transform: scale(0.95) translateY(10px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 /* Rediseño de Estadísticas */
@@ -553,4 +578,35 @@ input, textarea, button, select, a {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Personalización de la barra de desplazamiento (Scrollbar) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Color del texto al seleccionarlo (arrastrar el cursor) */
+::selection {
+  background: rgba(16, 185, 129, 0.3);
+  color: inherit;
+}
+
+/* Animación global para menús desplegables */
+.animate-fade-in {
+  animation: fade-in-down 0.2s ease-out forwards;
+}
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-5px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
