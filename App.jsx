@@ -80,7 +80,14 @@ export default function App() {
         // Si Firebase confirma la sesión pero no la tenemos, la recuperamos
         if (!perfilLocal || perfilLocal.id !== user.uid) {
           const docSnap = await getDoc(doc(db, "usuarios", user.uid));
-          if (docSnap.exists()) setPerfil(docSnap.data());
+          if (docSnap.exists()) {
+            setPerfil(docSnap.data());
+          } else {
+            // Si viene de una redirección en iOS y es su primera vez, creamos el perfil aquí
+            const nuevoPerfil = { id: user.uid, email: user.email, nickname: user.displayName || 'Invitado', photoURL: user.photoURL || null, stickers: {} };
+            await setDoc(doc(db, "usuarios", user.uid), nuevoPerfil);
+            setPerfil(nuevoPerfil);
+          }
         }
       } else if (perfilLocal && !perfilLocal.id.startsWith('invitado_')) {
         // Si Firebase indica que expiró la sesión y NO es un invitado, lo deslogueamos por seguridad
