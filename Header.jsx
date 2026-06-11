@@ -43,12 +43,15 @@ export default function Header({ perfil, onLogout, isMuted, toggleMute, theme, t
       <div onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
         <img src={LOGO_URL} alt="Logo" className={`header-logo ${isLogoAnimating ? 'logo-spin' : ''}`} />
         <div>
-          <select value={albumActivo} onChange={(e) => setAlbumActivo(e.target.value)} style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '18px', fontWeight: 'bold', appearance: 'none', cursor: 'pointer', outline: 'none', margin: 0, padding: 0 }}>
-            {Object.values(ALBUMS).map(album => (
-              <option key={album.id} value={album.id} style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>{album.nombre}</option>
-            ))}
-          </select>
-          <div style={{ opacity: 0.85, fontSize: '11px', marginTop: '-2px' }}>Gestor Cromos ▾</div>
+          <div style={{ position: 'relative', width: 'fit-content' }}>
+            <select value={albumActivo} onChange={(e) => setAlbumActivo(e.target.value)} style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '18px', fontWeight: 'bold', appearance: 'none', cursor: 'pointer', outline: 'none', margin: 0, padding: '0 14px 0 0' }}>
+              {Object.values(ALBUMS).map(album => (
+                <option key={album.id} value={album.id} style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}>{album.nombre}</option>
+              ))}
+            </select>
+            <span style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '10px', opacity: 0.8 }}>▼</span>
+          </div>
+          <div style={{ opacity: 0.85, fontSize: '11px', marginTop: '-2px' }}>Gestor Cromos</div>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
