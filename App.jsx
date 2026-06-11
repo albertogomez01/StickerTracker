@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import Confetti from 'react-confetti';
-import { SELECCIONES, TOTAL_STICKERS, parsearTextoAStickers } from './utils';
+import { SELECCIONES, TOTAL_STICKERS, parsearTextoAStickers, LOGO_URL } from './utils';
 import LoginScreen from './LoginScreen';
 import Header from './Header';
 import Footer from './Footer';
@@ -17,6 +17,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Toaster, toast } from 'react-hot-toast';
 
 export default function App() {
+  const [isInitializing, setIsInitializing] = useState(true);
   const [seccionActual, setSeccionActual] = useState('intercambios');
   const [perfil, setPerfil] = useState(() => {
     try {
@@ -64,6 +65,9 @@ export default function App() {
         // Si Firebase indica que expiró la sesión y NO es un invitado, lo deslogueamos por seguridad
         setPerfil(null);
       }
+      
+      // Ocultar la pantalla de carga después de procesar la sesión (con un pequeño retraso para ver la animación)
+      setTimeout(() => setIsInitializing(false), 1200);
     });
     return () => unsubscribe();
   }, []);
@@ -219,6 +223,16 @@ export default function App() {
     }
   }, [pctGlobal]);
 
+
+  if (isInitializing) {
+    return (
+      <div className="splash-screen">
+        <img src={LOGO_URL} alt="Logo" className="splash-logo" />
+        <div className="splash-loader"></div>
+        <h2 style={{ marginTop: '20px', fontSize: '22px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>Mundial 2026</h2>
+      </div>
+    );
+  }
 
   if (!perfil) {
     return <LoginScreen onLogin={handleLogin} />;
