@@ -12,7 +12,7 @@ import Mercado from './Mercado';
 import Estadisticas from './Estadisticas';
 import { db, auth } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 
 export default function App() {
   const [seccionActual, setSeccionActual] = useState('intercambios');
@@ -44,6 +44,26 @@ export default function App() {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
+  }, []);
+
+  useEffect(() => {
+    // El "guardián" de Firebase: vigila que la sesión sea válida al recargar
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      const guardado = localStorage.getItem('panini_perfil');
+      const perfilLocal = guardado ? JSON.parse(guardado) : null;
+
+      if (user) {
+        // Si Firebase confirma la sesión pero no la tenemos en la app, la recuperamos
+        if (!perfilLocal || perfilLocal.id !== user.uid) {
+          const docSnap = await getDoc(doc(db, "usuarios", user.uid));
+          if (docSnap.exists()) setPerfil(docSnap.data());
+        }
+      } else if (perfilLocal && !perfilLocal.id.startsWith('invitado_')) {
+        // Si Firebase indica que expiró la sesión y NO es un invitado, lo deslogueamos por seguridad
+        setPerfil(null);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

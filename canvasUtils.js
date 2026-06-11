@@ -23,5 +23,25 @@ export const generarImagenTrueque = (perfilNickname, nickAmigo, leDoyList, meDaL
   ctx.fillStyle = '#94A3B8'; ctx.font = 'italic 12px system-ui';
   ctx.fillText("Generado automáticamente por Gestor Panini 2026", 210, 475);
   
-  const link = document.createElement('a'); link.download = `intercambio_${nickAmigo}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+  canvas.toBlob(async (blob) => {
+    if (!blob) return;
+    
+    const file = new File([blob], `intercambio_${nickAmigo}.png`, { type: 'image/png' });
+    
+    // Comprobamos si el navegador (sobre todo en móviles) soporta compartir imágenes
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Propuesta de Intercambio',
+          text: `¡Hola! Mira esta propuesta de intercambio de cromos. 🔄`
+        });
+      } catch (error) {
+        console.log("El usuario canceló el menú de compartir");
+      }
+    } else {
+      // Fallback: si es un PC sin soporte de compartir, la descargamos normal
+      const link = document.createElement('a'); link.download = `intercambio_${nickAmigo}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+    }
+  }, 'image/png');
 };

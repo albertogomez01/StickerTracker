@@ -17,8 +17,11 @@ export default function LoginScreen({ onLogin }) {
       // Pasamos el objeto 'user' completo que nos da Firebase. Contiene el UID seguro.
       await onLogin(user);
     } catch (error) {
-      console.error("Error al iniciar sesión con Google:", error);
-      setErrorMsg(error.message);
+      // Si el usuario simplemente cerró la ventana, no lo tratamos como un error molesto
+      if (error.code !== 'auth/popup-closed-by-user') {
+        console.error("Error al iniciar sesión con Google:", error);
+        setErrorMsg(error.message);
+      }
       setIsLoading(false);
     }
   };
