@@ -7,6 +7,7 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'faltantes', 'repetidos'
+  const [busquedaAlbum, setBusquedaAlbum] = useState('');
 
   const playPopSound = () => {
     if (isMuted) return; // Se omite el sonido si está silenciado
@@ -53,6 +54,12 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
 
   // Filtramos las selecciones para ocultar los países que no tienen cromos que coincidan
   const seleccionesFiltradas = SELECCIONES.filter(sel => {
+    if (busquedaAlbum.trim() !== '') {
+      const termino = busquedaAlbum.toLowerCase();
+      if (!sel.nombre.toLowerCase().includes(termino) && !sel.id.toLowerCase().includes(termino)) {
+        return false;
+      }
+    }
     if (filtro === 'todos') return true;
     for (let i = 0; i < sel.total; i++) {
       const estado = perfil.stickers?.[`${sel.id}_${i.toString().padStart(2, '0')}`] || 0;
@@ -64,6 +71,10 @@ export default function Album({ perfil, alternarCromoManual, isMuted }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div className="card" style={{ padding: '12px' }}>
+        <input type="text" value={busquedaAlbum} onChange={(e) => { setBusquedaAlbum(e.target.value); setSeleccionExpandida(null); }} placeholder="Buscar país o código (ej: Argentina, ARG)..." className="input-field" style={{ padding: '10px 14px', fontSize: '14px' }} />
+      </div>
+
       <div className="card" style={{ display: 'flex', gap: '8px', padding: '12px' }}>
         <button onClick={() => setFiltro('todos')} className="btn-secondary" style={{ flex: 1, background: filtro === 'todos' ? 'var(--accent-primary)' : '', color: filtro === 'todos' ? '#FFF' : '', borderColor: filtro === 'todos' ? 'var(--accent-primary)' : '' }}>Todos</button>
         <button onClick={() => setFiltro('faltantes')} className="btn-secondary" style={{ flex: 1, background: filtro === 'faltantes' ? '#EF4444' : '', color: filtro === 'faltantes' ? '#FFF' : '', borderColor: filtro === 'faltantes' ? '#EF4444' : '' }}>Faltan</button>
