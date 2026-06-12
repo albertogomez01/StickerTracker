@@ -13,7 +13,7 @@ const EXTRA_PLAYERS = [
 ];
 const EXTRA_VARIANTS = ["Base", "Bronce", "Plata", "Oro"];
 
-export default function Album({ perfil, alternarCromoManual, marcarEquipoCompleto, isMuted, albumActivo, deshacerUltimo, undoCount }) {
+export default function Album({ perfil, alternarCromoManual, marcarEquipoCompleto, vaciarEquipoCompleto, isMuted, albumActivo, deshacerUltimo, undoCount }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'faltantes', 'repetidos'
@@ -182,12 +182,20 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
             </div>
             {seleccionExpandida === sel.id && (
               <div style={{ marginTop: '12px', background: 'var(--bg-input)', padding: '12px', borderRadius: '16px' }}>
-                {pctSel < 100 && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
-                    <button onClick={(e) => { e.stopPropagation(); marcarEquipoCompleto(sel.id); }} className="btn-secondary" style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                      Completar equipo
-                    </button>
+                {(pctSel < 100 || tEnFila > 0) && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px', gap: '8px' }}>
+                    {tEnFila > 0 && (
+                      <button onClick={(e) => { e.stopPropagation(); vaciarEquipoCompleto(sel.id); }} className="btn-secondary" style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', color: '#EF4444', borderColor: '#FCA5A5', background: '#FEF2F2' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        Vaciar equipo
+                      </button>
+                    )}
+                    {pctSel < 100 && (
+                      <button onClick={(e) => { e.stopPropagation(); marcarEquipoCompleto(sel.id); }} className="btn-secondary" style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        Completar equipo
+                      </button>
+                    )}
                   </div>
                 )}
                 {(() => {
