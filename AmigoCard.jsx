@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SELECCIONES } from './utils';
+import { ALBUMS } from './utils';
 import { generarImagenTrueque } from './canvasUtils';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
@@ -35,8 +35,10 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
     return () => unsub();
   }, [amigo.id]);
 
+  const seleccionesAlbum = ALBUMS[albumActivo]?.selecciones || [];
+
   let fCount = 0; let tCount = 0; let rCount = 0;
-  SELECCIONES.forEach(s => {
+  seleccionesAlbum.forEach(s => {
     for (let i = 0; i < s.total; i++) {
       const status = amigo.stickers?.[`${s.id}_${i.toString().padStart(2, '0')}`] || 0;
       if (status === 0) fCount++;
@@ -46,7 +48,7 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
   });
 
   const candidatosLeDoy = []; const candidatosElMeDa = [];
-  SELECCIONES.forEach(sel => {
+  seleccionesAlbum.forEach(sel => {
     for (let i = 0; i < sel.total; i++) {
       const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
       const miEstado = perfil?.stickers?.[cod] || 0;

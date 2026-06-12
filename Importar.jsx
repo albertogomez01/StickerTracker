@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { SELECCIONES } from './utils';
+import { ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Importar({ procesarImportadorTexto, perfil }) {
+export default function Importar({ procesarImportadorTexto, perfil, albumActivo }) {
   const [textoFaltantes, setTextoFaltantes] = useState('');
   const [textoRepetidos, setTextoRepetidos] = useState('');
 
   const generarTextoListas = (paraWhatsApp = false) => {
     let faltantes = [];
     let repetidos = [];
+    const seleccionesAlbum = ALBUMS[albumActivo]?.selecciones || [];
 
-    SELECCIONES.forEach(sel => {
+    seleccionesAlbum.forEach(sel => {
       let fSel = [];
       let rSel = [];
       for (let i = 0; i < sel.total; i++) {
@@ -26,7 +27,7 @@ export default function Importar({ procesarImportadorTexto, perfil }) {
     });
 
     if (paraWhatsApp) {
-      return `*MIS FALTANTES - MUNDIAL 2026*\n${faltantes.join('\n')}\n\n*MIS REPETIDOS*\n${repetidos.join('\n')}`;
+      return `*MIS FALTANTES - ${ALBUMS[albumActivo]?.nombre || 'Mundial 2026'}*\n${faltantes.join('\n')}\n\n*MIS REPETIDOS*\n${repetidos.join('\n')}`;
     }
     return `FALTAN:\n${faltantes.join('\n')}\n\nREPETIDOS:\n${repetidos.join('\n')}`;
   };

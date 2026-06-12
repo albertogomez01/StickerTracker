@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LOGO_URL } from './utils';
 import './App.css';
 import { auth, googleProvider } from './firebase';
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signInAnonymously } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
 
 export default function LoginScreen({ onLogin }) {
@@ -54,9 +54,8 @@ export default function LoginScreen({ onLogin }) {
   const handleGuestLogin = async () => {
     setIsLoading(true);
     try {
-      const result = await signInAnonymously(auth);
       const guestUser = {
-        uid: result.user.uid,
+        uid: `invitado_${Date.now()}`,
         displayName: 'Invitado',
         email: null
       };

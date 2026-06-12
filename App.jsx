@@ -23,7 +23,9 @@ export default function App() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [albumActivo, setAlbumActivo] = useState(() => localStorage.getItem('panini_album') || 'mundial_2026');
   const saveTimeoutRef = useRef(null);
+  const lastActionRef = useRef(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [isNetworkOnline, setIsNetworkOnline] = useState(navigator.onLine);
   const [perfil, setPerfil] = useState(() => {
     try {
       const guardado = localStorage.getItem('panini_perfil');
@@ -40,13 +42,50 @@ export default function App() {
     }
   });
   const [showConfetti, setShowConfetti] = useState(false);
-  const [theme, setTheme] = useState(() => localStorage.getItem('panini_theme') || 'light');
+  const [theme, setTheme] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('panini_theme');
+      if (savedTheme) return savedTheme;
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    } catch (e) {}
+    return 'light';
+  });
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('panini_tutorial_seen'));
 
   useEffect(() => {
+    // 📡 Listener para detectar conexión a Internet en tiempo real
+    const handleOnline = () => {
+      setIsNetworkOnline(true);
+      toast.success("Conexión restaurada, sincronizando...");
+    };
+    const handleOffline = () => setIsNetworkOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('panini_theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      // Solo cambiamos automáticamente si el usuario no ha forzado un tema manualmente
+      if (!localStorage.getItem('panini_theme')) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('panini_album', albumActivo);
@@ -90,14 +129,39 @@ export default function App() {
       if (user) {
         // Si Firebase confirma la sesión pero no la tenemos, la recuperamos
         if (!perfilLocal || perfilLocal.id !== user.uid) {
-          const docSnap = await getDoc(doc(db, "usuarios", user.uid));
+          const userRef = doc(db, "usuarios", user.uid);
+          const docSnap = await getDoc(userRef);
+          
+          const guestTransferStr = localStorage.getItem('panini_guest_transfer');
+          let guestStickers = null;
+          if (guestTransferStr) {
+            try { guestStickers = JSON.parse(guestTransferStr); } catch (e) {}
+            localStorage.removeItem('panini_guest_transfer');
+          }
+
           if (docSnap.exists()) {
-            setPerfil(docSnap.data());
+            const data = docSnap.data();
+            if (guestStickers && Object.keys(guestStickers).length > 0) {
+              const merged = { ...data.stickers };
+              let modified = false;
+              for (const [k, v] of Object.entries(guestStickers)) {
+                if (v > (merged[k] || 0)) { merged[k] = v; modified = true; }
+              }
+              if (modified) {
+                data.stickers = merged;
+                await setDoc(userRef, { stickers: merged }, { merge: true });
+                setTimeout(() => toast.success("¡Tus cromos de invitado se han transferido!"), 1000);
+              }
+            }
+            setPerfil(data);
           } else {
             // Si viene de una redirección en iOS y es su primera vez, creamos el perfil aquí
-            const nuevoPerfil = { id: user.uid, email: user.email, nickname: user.displayName || 'Invitado', photoURL: user.photoURL || null, stickers: {} };
-            await setDoc(doc(db, "usuarios", user.uid), nuevoPerfil);
+            const nuevoPerfil = { id: user.uid, email: user.email, nickname: user.displayName || 'Invitado', photoURL: user.photoURL || null, stickers: guestStickers || {} };
+            await setDoc(userRef, nuevoPerfil);
             setPerfil(nuevoPerfil);
+            if (guestStickers && Object.keys(guestStickers).length > 0) {
+              setTimeout(() => toast.success("¡Tus cromos de invitado se han guardado!"), 1000);
+            }
           }
         }
       } else if (perfilLocal && !perfilLocal.id.startsWith('invitado_')) {
@@ -112,7 +176,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!perfil?.id) return;
+    if (!perfil?.id || perfil.id.startsWith('invitado_')) return;
     
     // 🎧 Escuchamos los cambios de Firestore en tiempo real
     const unsub = onSnapshot(doc(db, "usuarios", perfil.id), (docSnap) => {
@@ -132,7 +196,7 @@ export default function App() {
   }, [perfil?.id]);
 
   useEffect(() => {
-    if (!perfil?.id) return;
+    if (!perfil?.id || perfil.id.startsWith('invitado_')) return;
     
     // 🎧 Escuchamos la colección de notificaciones en tiempo real
     const unsubNotifs = onSnapshot(doc(db, "notificaciones", perfil.id), (docSnap) => {
@@ -205,7 +269,18 @@ export default function App() {
   };
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+    setTheme(prev => {
+      const newTheme = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('panini_theme', newTheme);
+      return newTheme;
+    });
+  };
+
+  const resetTheme = () => {
+    localStorage.removeItem('panini_theme'); // Olvidamos la decisión manual
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(isDark ? 'dark' : 'light'); // Volvemos a leer el sistema
+    toast.success("Tema automático (sistema) activado");
   };
 
   const cambiarApodo = async (nuevoApodo) => {
@@ -213,6 +288,12 @@ export default function App() {
     const apodoLimpio = nuevoApodo.trim();
     const nuevoPerfil = { ...perfil, nickname: apodoLimpio };
     setPerfil(nuevoPerfil);
+
+    if (perfil.id.startsWith('invitado_')) {
+      toast.success("Apodo actualizado localmente.");
+      return;
+    }
+
     try {
       await setDoc(doc(db, "usuarios", perfil.id), nuevoPerfil);
       // Actualizamos también el mercado si el usuario estaba publicado
@@ -250,6 +331,11 @@ export default function App() {
         const base64 = canvas.toDataURL('image/jpeg', 0.8);
         const nuevoPerfil = { ...perfil, photoURL: base64 };
         setPerfil(nuevoPerfil);
+
+        if (perfil.id.startsWith('invitado_')) {
+          toast.success("Foto de perfil actualizada localmente.");
+          return;
+        }
         
         try {
           await setDoc(doc(db, "usuarios", perfil.id), nuevoPerfil);
@@ -272,6 +358,13 @@ export default function App() {
 
   const handleEliminarCuenta = async () => {
     if (window.confirm("⚠️ ¿Estás completamente seguro de que quieres eliminar tu cuenta? Esta acción borrará todos tus cromos y datos guardados, y NO se puede deshacer.")) {
+      if (perfil?.id?.startsWith('invitado_')) {
+        setPerfil(null);
+        localStorage.clear();
+        toast.success("Tus datos de invitado han sido borrados.");
+        return;
+      }
+
       try {
         const user = auth.currentUser;
         if (!user) return toast.error("No hay sesión activa.");
@@ -305,6 +398,13 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    if (perfil?.id?.startsWith('invitado_')) {
+      // Guardamos la lista de cromos temporalmente antes de pedir login
+      localStorage.setItem('panini_guest_transfer', JSON.stringify(perfil.stickers));
+      setPerfil(null);
+      return;
+    }
+
     if (window.confirm("¿Seguro que quieres cerrar sesión? Se borrarán tus datos guardados.")) {
       try { await signOut(auth); } catch (e) { console.error("Error al cerrar sesión:", e); }
       setPerfil(null);
@@ -315,18 +415,47 @@ export default function App() {
   const handleLogin = async (user) => {
     // Usamos el UID de Firebase Auth como ID de usuario. Es único y seguro.
     const userId = user.uid;
+
+    if (userId.startsWith('invitado_')) {
+      setPerfil({ id: userId, email: user.email, nickname: user.displayName || 'Invitado', photoURL: null, stickers: {} });
+      return;
+    }
+
     const userRef = doc(db, "usuarios", userId);
 
     try {
       const docSnap = await getDoc(userRef);
 
+      const guestTransferStr = localStorage.getItem('panini_guest_transfer');
+      let guestStickers = null;
+      if (guestTransferStr) {
+        try { guestStickers = JSON.parse(guestTransferStr); } catch (e) {}
+        localStorage.removeItem('panini_guest_transfer');
+      }
+
       if (docSnap.exists()) {
-        setPerfil(docSnap.data()); // ☁️ Carga los datos existentes de la nube
+        const data = docSnap.data();
+        if (guestStickers && Object.keys(guestStickers).length > 0) {
+          const merged = { ...data.stickers };
+          let modified = false;
+          for (const [k, v] of Object.entries(guestStickers)) {
+            if (v > (merged[k] || 0)) { merged[k] = v; modified = true; }
+          }
+          if (modified) {
+            data.stickers = merged;
+            await setDoc(userRef, { stickers: merged }, { merge: true });
+            setTimeout(() => toast.success("¡Tus cromos de invitado se han transferido!"), 1000);
+          }
+        }
+        setPerfil(data); // ☁️ Carga los datos existentes de la nube
       } else {
         // 🆕 Crea un perfil nuevo en la base de datos si es su primera vez
-        const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', photoURL: user.photoURL || null, stickers: {} };
+        const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', photoURL: user.photoURL || null, stickers: guestStickers || {} };
         await setDoc(userRef, nuevoPerfil);
         setPerfil(nuevoPerfil);
+        if (guestStickers && Object.keys(guestStickers).length > 0) {
+          setTimeout(() => toast.success("¡Tus cromos de invitado se han guardado!"), 1000);
+        }
       }
     } catch (error) {
       console.warn("Error accediendo a la base de datos (quizás falta configuración o es invitado local):", error);
@@ -335,7 +464,46 @@ export default function App() {
     }
   };
 
+  const deshacerCromo = (codigo, valorPrevio) => {
+    setPerfil(prev => {
+      const copia = { ...prev.stickers };
+      copia[codigo] = valorPrevio;
+      const nuevoPerfil = { ...prev, stickers: copia };
+      
+      if (nuevoPerfil.id && !nuevoPerfil.id.startsWith('invitado_')) {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e)), 1500);
+      }
+      return nuevoPerfil;
+    });
+    toast.success("Acción deshecha", { id: 'deshacer-toast' });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Escuchar Ctrl+Z (Windows) o Cmd+Z (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        // Si el usuario está escribiendo texto en un buscador o chat, no intervenimos
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea') return;
+
+        if (lastActionRef.current) {
+          e.preventDefault();
+          const { codigo, valorPrevio } = lastActionRef.current;
+          deshacerCromo(codigo, valorPrevio);
+          lastActionRef.current = null; // Limpiar para no deshacer 2 veces seguidas
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const alternarCromoManual = (codigo) => {
+    // Guardamos en memoria (Ref) cuál era el valor justo antes de que lo toquemos
+    const valorPrevio = perfil?.stickers?.[codigo] || 0;
+    lastActionRef.current = { codigo, valorPrevio };
+
     setPerfil(prev => {
       const copia = { ...prev.stickers };
       const valor = copia[codigo] !== undefined ? copia[codigo] : 0;
@@ -343,12 +511,31 @@ export default function App() {
       const nuevoPerfil = { ...prev, stickers: copia };
       
       // Agrupamos las escrituras a la base de datos (Debounce) para ahorrar cuota
-      if (nuevoPerfil.id) {
+      if (nuevoPerfil.id && !nuevoPerfil.id.startsWith('invitado_')) {
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = setTimeout(() => setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e)), 1500);
       }
       return nuevoPerfil;
     });
+
+    // Mostrar el toast temporal (sobrescribe cualquier toast de deshacer anterior)
+    toast((t) => (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ fontSize: '14px' }}>Cromo actualizado</span>
+        <button 
+          onClick={() => {
+            toast.dismiss(t.id);
+            if (lastActionRef.current) {
+              deshacerCromo(codigo, valorPrevio);
+              lastActionRef.current = null;
+            }
+          }} 
+          style={{ background: 'var(--bg-input)', border: '1px solid var(--border-primary)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+        >
+          Deshacer (Ctrl+Z)
+        </button>
+      </div>
+    ), { id: 'deshacer-toast', duration: 4000 });
   };
 
   const marcarEquipoCompleto = (equipoId) => {
@@ -367,7 +554,9 @@ export default function App() {
       }
       
       const nuevoPerfil = { ...prev, stickers: copia };
-      if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      if (nuevoPerfil.id && !nuevoPerfil.id.startsWith('invitado_')) {
+        setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      }
       return nuevoPerfil;
     });
     toast.success(`Equipo completado correctamente.`);
@@ -378,7 +567,9 @@ export default function App() {
       const nuevaCopia = parsearTextoAStickers(texto, tipo, albumActivo, prev.stickers);
       const nuevoPerfil = { ...prev, stickers: nuevaCopia };
       // Guardamos en la nube inmediatamente al importar
-      if (nuevoPerfil.id) setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      if (nuevoPerfil.id && !nuevoPerfil.id.startsWith('invitado_')) {
+        setDoc(doc(db, "usuarios", nuevoPerfil.id), nuevoPerfil).catch(e => console.error(e));
+      }
       return nuevoPerfil;
     });
     toast.success(`¡Lista de ${tipo} procesada correctamente!`);
@@ -430,7 +621,13 @@ export default function App() {
   return (
     <div className="app-container">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
-      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} cambiarApodo={cambiarApodo} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} />
+      {!isNetworkOnline && (
+        <div style={{ position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)', background: '#EF4444', color: 'white', padding: '6px 16px', borderRadius: '99px', fontSize: '13px', fontWeight: 'bold', zIndex: 1001, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+          Estás Offline
+        </div>
+      )}
+      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} cambiarApodo={cambiarApodo} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} />
 
       <div className="content-wrapper" style={{ marginTop: '16px' }}>
         <div className="card stats-card-modern">
@@ -453,8 +650,8 @@ export default function App() {
         <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '14px' }}>Cargando sección...</div>}>
           {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} marcarEquipoCompleto={marcarEquipoCompleto} isMuted={isMuted} albumActivo={albumActivo} />}
           {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
-          {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} />}
-          {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} />}
+          {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} onLogout={handleLogout} />}
+          {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} onLogout={handleLogout} />}
           {seccionActual === 'stats' && <Estadisticas albumActivo={albumActivo} perfil={perfil} />}
         </Suspense>
       </div>

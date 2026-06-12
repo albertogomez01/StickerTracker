@@ -24,7 +24,7 @@ const REGIONES_ESPANA = {
   "País Vasco": ["Bilbao", "Vitoria-Gasteiz", "San Sebastián", "Barakaldo"]
 };
 
-export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
+export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogout }) {
   const [usuariosMercado, setUsuariosMercado] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [solicitudesEnviadas, setSolicitudesEnviadas] = useState([]);
@@ -301,6 +301,24 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo }) {
   };
 
   const usuariosFiltrados = usuariosMercado.filter(u => u.nickname.toLowerCase().includes(busquedaMercado.toLowerCase()));
+
+  if (perfil?.id?.startsWith('invitado_')) {
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: '40px 20px', marginTop: '20px' }}>
+        <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔒</div>
+        <h3 style={{ color: 'var(--accent-primary)', marginBottom: '12px' }}>Función Multijugador</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px' }}>
+          Para acceder al Mercado público, publicar tu lista de cromos y buscar intercambios, necesitas iniciar sesión con una cuenta de Google.
+        </p>
+        <button onClick={onLogout} className="btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '10px', marginBottom: '16px' }}>
+          Iniciar Sesión
+        </button>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+          (Al iniciar sesión, saldrás del modo invitado).
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>

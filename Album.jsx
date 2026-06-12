@@ -1,13 +1,74 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ALBUMS } from './utils';
+import { db } from './firebase';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
 let globalAudioCtx = null;
+
+const EXTRA_PLAYERS = [
+  "Hakimi", "Davies", "Pulisic", "Gakpo", "C. Ronaldo",
+  "Haaland", "Valverde", "Wirtz", "Son", "Doku",
+  "Bellingham", "Mbappé", "Lamine", "Messi", "Modrić",
+  "Luis Díaz", "Salah", "Caicedo", "Raúl J.", "Vinícius Jr."
+];
+const EXTRA_VARIANTS = ["Base", "Bronce", "Plata", "Oro"];
 
 export default function Album({ perfil, alternarCromoManual, marcarEquipoCompleto, isMuted, albumActivo }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'faltantes', 'repetidos'
   const [busquedaAlbum, setBusquedaAlbum] = useState('');
+  const [dificiles, setDificiles] = useState(new Set());
+
+  useEffect(() => {
+    const calcularDificiles = async () => {
+      const cacheKey = `panini_dificiles_${albumActivo}`;
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < 1000 * 60 * 60 * 12) { // 12 horas de caché
+            setDificiles(new Set(data));
+            return;
+          }
+        }
+      } catch(e) {}
+
+      try {
+        const colName = albumActivo === 'mundial_2026' ? 'mercado' : `mercado_${albumActivo}`;
+        const q = query(collection(db, colName), orderBy('timestamp', 'desc'), limit(100));
+        const snap = await getDocs(q);
+        const mData = [];
+        snap.forEach(doc => mData.push(doc.data()));
+
+        const dif = new Set();
+        const selecciones = ALBUMS[albumActivo]?.selecciones || [];
+        
+        selecciones.forEach(sel => {
+          for(let i=0; i<sel.total; i++) {
+            const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+            let loBuscan = 0;
+            let loTienenRepetido = 0;
+            mData.forEach(u => {
+              const v = u.stickers?.[cod] || 0;
+              if (v === 0) loBuscan++;
+              else if (v >= 2) loTienenRepetido++;
+            });
+            if (loBuscan > 0 && (loTienenRepetido / loBuscan) <= 0.3) {
+              dif.add(cod);
+            }
+          }
+        });
+        
+        setDificiles(dif);
+        localStorage.setItem(cacheKey, JSON.stringify({ data: Array.from(dif), timestamp: Date.now() }));
+      } catch(e) {
+        console.error("Error cargando dificultades:", e);
+      }
+    };
+
+    calcularDificiles();
+  }, [albumActivo]);
 
   const playPopSound = () => {
     if (isMuted) return; // Se omite el sonido si está silenciado
@@ -49,6 +110,7 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
   const renderDigitalFlag = (sel) => {
     if (sel.id === 'FWC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Copa</span>;
     if (sel.id === 'CC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>CC</span>;
+    if (sel.id === 'EXT26') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🌟</span>;
     if (sel.flagCode) return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" loading="lazy" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
     return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⚽</span>;
   };
@@ -137,10 +199,25 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
                   })
                   .map(s => {
                     let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
-                    let txt = s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`;
+                    let txt = '';
+                    if (sel.id === 'EXT26') {
+                      const pIdx = Math.floor((s.numeroVisual - 1) / 4);
+                      const vIdx = (s.numeroVisual - 1) % 4;
+                      txt = `${EXTRA_PLAYERS[pIdx] || 'Extra'} (${EXTRA_VARIANTS[vIdx]})`;
+                    } else {
+                      txt = s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`;
+                    }
                     if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
+                    
+                    const esDificil = dificiles.has(s.codigo);
+
                     return (
-                      <button key={s.codigo} onClick={() => handleStickerClick(s.codigo)} className={`sticker-btn ${animatingSticker === s.codigo ? 'animate-pop' : ''}`} style={{ background: bg }}>
+                      <button key={s.codigo} onClick={() => handleStickerClick(s.codigo)} className={`sticker-btn ${animatingSticker === s.codigo ? 'animate-pop' : ''}`} style={{ background: bg, position: 'relative' }}>
+                        {esDificil && (
+                          <div style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-card)', borderRadius: '50%', padding: '2px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', display: 'flex', zIndex: 10 }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#EAB308" stroke="#CA8A04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          </div>
+                        )}
                         {txt}
                       </button>
                     );

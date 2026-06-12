@@ -3,7 +3,7 @@ import './App.css';
 import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable }) {
+export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, resetTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
@@ -112,6 +112,10 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 Cambiar foto
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { cambiarFoto(e); setShowDropdown(false); }} />
               </label>
+              <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
+              <button onClick={() => { setShowDropdown(false); resetTheme(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
+                Tema Automático (Sistema)
+              </button>
               {(updateAvailable || installPrompt) && <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>}
               {updateAvailable ? (
                 <button onClick={() => window.location.reload()} style={{ background: 'var(--accent-primary)', border: 'none', color: 'white', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
@@ -128,7 +132,7 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
               </a>
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <button onClick={() => { setShowDropdown(false); onLogout(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
-                Cerrar sesión
+                {perfil?.id?.startsWith('invitado_') ? 'Iniciar sesión' : 'Cerrar sesión'}
               </button>
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <button onClick={() => { setShowDropdown(false); onEliminarCuenta(); }} style={{ background: 'transparent', border: 'none', color: '#DC2626', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>

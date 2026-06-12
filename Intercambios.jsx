@@ -5,7 +5,7 @@ import { db } from './firebase';
 import { doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
-export default function Intercambios({ perfil, albumActivo }) {
+export default function Intercambios({ perfil, albumActivo, onLogout }) {
   const [comunidadUsuarios, setComunidadUsuarios] = useState([]);
   const [datosCargados, setDatosCargados] = useState(false);
   const [nuevoAmigoNombre, setNuevoAmigoNombre] = useState('');
@@ -161,6 +161,24 @@ export default function Intercambios({ perfil, albumActivo }) {
     }
     return true;
   });
+
+  if (perfil?.id?.startsWith('invitado_')) {
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: '40px 20px', marginTop: '20px' }}>
+        <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔒</div>
+        <h3 style={{ color: 'var(--accent-primary)', marginBottom: '12px' }}>Función Multijugador</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px' }}>
+          La sección de Intercambios y el Chat Privado son exclusivos para usuarios registrados. Inicia sesión con una cuenta de Google para conectar con tus amigos.
+        </p>
+        <button onClick={onLogout} className="btn-primary" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '10px', marginBottom: '16px' }}>
+          Iniciar Sesión
+        </button>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+          (Al iniciar sesión, saldrás del modo invitado).
+        </p>
+      </div>
+    );
+  }
 
   if (chatAmigo) {
     return (
