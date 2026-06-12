@@ -633,9 +633,16 @@ export default function App() {
   if (isInitializing) {
     return (
       <div className="splash-screen">
-        <img src={LOGO_URL} alt="Logo" className="splash-logo" />
-        <div className="splash-loader"></div>
-        <h2 style={{ marginTop: '20px', fontSize: '22px', fontWeight: 'bold', letterSpacing: '-0.5px' }}>Mundial 2026</h2>
+        <div className="login-background">
+          <div className="login-blob login-blob-1"></div>
+          <div className="login-blob login-blob-2"></div>
+        </div>
+        <div className="splash-content">
+          <img src={LOGO_URL} alt="Logo" className="splash-logo" />
+          <h2 className="splash-title">Mundial 2026</h2>
+          <p className="splash-subtitle">Preparando tu álbum...</p>
+          <div className="splash-loader-container"><div className="splash-loader-bar"></div></div>
+        </div>
       </div>
     );
   }

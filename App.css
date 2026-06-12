@@ -539,7 +539,6 @@ input, textarea, button, select, a {
 .splash-screen {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, #0f766e 0%, #064e3b 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -548,36 +547,63 @@ input, textarea, button, select, a {
   color: white;
 }
 
-[data-theme='dark'] .splash-screen {
-  background: linear-gradient(135deg, #111827 0%, #030712 100%);
+.splash-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
 .splash-logo {
-  width: 110px;
-  height: 110px;
-  animation: pulse-splash 1.5s infinite ease-in-out;
-  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
-  margin-bottom: 24px;
+  width: 120px;
+  height: 120px;
+  animation: float-splash 3s ease-in-out infinite;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));
+  margin-bottom: 16px;
 }
-
-.splash-loader {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255,255,255,0.2);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.splash-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
-
-@keyframes pulse-splash {
-  0% { transform: scale(0.95); opacity: 0.9; }
-  50% { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.9; }
+.splash-subtitle {
+  margin: 8px 0 32px 0;
+  font-size: 15px;
+  opacity: 0.8;
+  font-weight: 500;
 }
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.splash-loader-container {
+  width: 160px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+.splash-loader-bar {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%; width: 50%;
+  background: #fff;
+  border-radius: 10px;
+  animation: splash-loading 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes splash-loading {
+  0% { transform: translateX(-100%); width: 20%; }
+  50% { width: 50%; }
+  100% { transform: translateX(250%); width: 20%; }
+}
+@keyframes float-splash {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.05); }
+}
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Personalización de la barra de desplazamiento (Scrollbar) */
