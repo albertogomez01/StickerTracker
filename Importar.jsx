@@ -9,22 +9,40 @@ export default function Importar({ procesarImportadorTexto, perfil, albumActivo 
   const generarTextoListas = (paraWhatsApp = false) => {
     let faltantes = [];
     let repetidos = [];
-    const seleccionesAlbum = ALBUMS[albumActivo]?.selecciones || [];
+    const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
+    const seleccionesAlbum = albumData.selecciones || [];
+    const isSequential = albumData.isSequential;
 
-    seleccionesAlbum.forEach(sel => {
-      let fSel = [];
-      let rSel = [];
-      for (let i = 0; i < sel.total; i++) {
-        const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
-        const v = perfil?.stickers?.[cod] || 0;
-        if (v === 0) fSel.push(i + 1);
-        else if (v >= 2) {
-          rSel.push(v > 2 ? `${i + 1}x${v - 1}` : `${i + 1}`);
+    if (isSequential) {
+      let fSeq = [];
+      let rSeq = [];
+      let currentSeq = 1;
+      seleccionesAlbum.forEach(sel => {
+        for (let i = 0; i < sel.total; i++) {
+          const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+          const v = perfil?.stickers?.[cod] || 0;
+          const absNum = currentSeq + i;
+          if (v === 0) fSeq.push(absNum);
+          else if (v >= 2) rSeq.push(v > 2 ? `${absNum}x${v - 1}` : `${absNum}`);
         }
-      }
-      if (fSel.length > 0) faltantes.push(`${sel.id}: ${fSel.join(', ')}`);
-      if (rSel.length > 0) repetidos.push(`${sel.id}: ${rSel.join(', ')}`);
-    });
+        currentSeq += sel.total;
+      });
+      if (fSeq.length > 0) faltantes.push(fSeq.join(', '));
+      if (rSeq.length > 0) repetidos.push(rSeq.join(', '));
+    } else {
+      seleccionesAlbum.forEach(sel => {
+        let fSel = [];
+        let rSel = [];
+        for (let i = 0; i < sel.total; i++) {
+          const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+          const v = perfil?.stickers?.[cod] || 0;
+          if (v === 0) fSel.push(i + 1);
+          else if (v >= 2) rSel.push(v > 2 ? `${i + 1}x${v - 1}` : `${i + 1}`);
+        }
+        if (fSel.length > 0) faltantes.push(`${sel.id}: ${fSel.join(', ')}`);
+        if (rSel.length > 0) repetidos.push(`${sel.id}: ${rSel.join(', ')}`);
+      });
+    }
 
     if (paraWhatsApp) {
       return `*MIS FALTANTES - ${ALBUMS[albumActivo]?.nombre || 'Mundial 2026'}*\n${faltantes.join('\n')}\n\n*MIS REPETIDOS*\n${repetidos.join('\n')}`;
@@ -47,6 +65,11 @@ export default function Importar({ procesarImportadorTexto, perfil, albumActivo 
     window.open(`https://wa.me/?text=${textoCodificado}`, '_blank');
   };
 
+  const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
+  const isSequential = albumData.isSequential;
+  const placeFaltantes = isSequential ? "1, 2, 5-10, 15..." : "ESP: 1, 2, 5...";
+  const placeRepetidos = isSequential ? "3x2, 12, 40-42..." : "MEX: 3x2, ESP: 12...";
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div className="card">
@@ -65,13 +88,13 @@ export default function Importar({ procesarImportadorTexto, perfil, albumActivo 
 
       <div className="card">
         <h3 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 'bold', color: '#EF4444' }}>Pegar Lista de Faltantes</h3>
-        <textarea value={textoFaltantes} onChange={(e) => setTextoFaltantes(e.target.value)} placeholder="ESP: 1, 2, 5..." className="input-field" style={{ height: '90px', marginBottom: '10px' }} />
+        <textarea value={textoFaltantes} onChange={(e) => setTextoFaltantes(e.target.value)} placeholder={placeFaltantes} className="input-field" style={{ height: '90px', marginBottom: '10px' }} />
         <button onClick={() => { procesarImportadorTexto(textoFaltantes, 'faltantes'); setTextoFaltantes(''); }} className="btn-primary">Calcular Álbum Completo</button>
       </div>
 
       <div className="card">
         <h3 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 'bold', color: '#F59E0B' }}>Actualizar Lista de Repetidos</h3>
-        <textarea value={textoRepetidos} onChange={(e) => setTextoRepetidos(e.target.value)} placeholder="MEX: 3x2, ESP: 12..." className="input-field" style={{ height: '90px', marginBottom: '10px' }} />
+        <textarea value={textoRepetidos} onChange={(e) => setTextoRepetidos(e.target.value)} placeholder={placeRepetidos} className="input-field" style={{ height: '90px', marginBottom: '10px' }} />
         <button onClick={() => { procesarImportadorTexto(textoRepetidos, 'repetidos'); setTextoRepetidos(''); }} className="btn-primary">Actualizar repetidos</button>
       </div>
     </div>

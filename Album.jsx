@@ -111,18 +111,38 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
     if (sel.id === 'FWC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Copa</span>;
     if (sel.id === 'CC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>CC</span>;
     if (sel.id === 'EXT26') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🌟</span>;
+    if (sel.id === 'INT') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🏁</span>;
+    if (sel.id === 'EST') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🏟️</span>;
+    if (sel.id === 'LEY') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⭐</span>;
+    if (sel.id === 'EXT') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>➕</span>;
     if (sel.flagCode) return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" loading="lazy" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
     return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⚽</span>;
   };
 
-  // Filtramos las selecciones para ocultar los países que no tienen cromos que coincidan
+  const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
+  const isSequential = albumData.isSequential;
+
+  const seleccionesConIndices = useMemo(() => {
+    let currentSeq = 1;
+    return albumData.selecciones.map(sel => {
+      const start = currentSeq;
+      currentSeq += sel.total;
+      return { ...sel, startIndex: start };
+    });
+  }, [albumData]);
+
   const seleccionesFiltradas = useMemo(() => {
-    return (ALBUMS[albumActivo] || ALBUMS['mundial_2026']).selecciones.filter(sel => {
+    return seleccionesConIndices.filter(sel => {
       if (busquedaAlbum.trim() !== '') {
         const termino = busquedaAlbum.toLowerCase();
-        if (!sel.nombre.toLowerCase().includes(termino) && !sel.id.toLowerCase().includes(termino)) {
-          return false;
+        let matches = sel.nombre.toLowerCase().includes(termino) || sel.id.toLowerCase().includes(termino);
+        if (!matches && isSequential) {
+          const numBusqueda = parseInt(termino, 10);
+          if (!isNaN(numBusqueda) && numBusqueda >= sel.startIndex && numBusqueda < sel.startIndex + sel.total) {
+            matches = true;
+          }
         }
+        if (!matches) return false;
       }
       if (filtro === 'todos') return true;
       for (let i = 0; i < sel.total; i++) {
@@ -132,7 +152,7 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
       }
       return false;
     });
-  }, [albumActivo, busquedaAlbum, filtro, perfil.stickers]);
+  }, [seleccionesConIndices, busquedaAlbum, filtro, perfil.stickers, isSequential]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -256,7 +276,7 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
                       {stickersData.map(s => {
                         let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
-                        let txt = s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`;
+                        let txt = isSequential ? (sel.startIndex + s.numeroVisual - 1).toString() : (s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`);
                         if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
                         const esDificil = dificiles.has(s.codigo);
 

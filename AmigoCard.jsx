@@ -51,15 +51,20 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
   });
 
   const candidatosLeDoy = []; const candidatosElMeDa = [];
+  let currentSeq = 1;
+  const isSequential = ALBUMS[albumActivo]?.isSequential;
+
   seleccionesAlbum.forEach(sel => {
     for (let i = 0; i < sel.total; i++) {
       const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
       const miEstado = perfil?.stickers?.[cod] || 0;
       const amigoEstado = amigo.stickers?.[cod] || 0;
-      const tag = i === 0 ? `${sel.id} Escudo` : `${sel.id} ${i + 1}`;
+      const absNum = currentSeq + i;
+      const tag = isSequential ? absNum.toString() : (i === 0 ? `${sel.id} Escudo` : `${sel.id} ${i + 1}`);
       if (miEstado >= 2 && amigoEstado === 0) candidatosLeDoy.push({ cod, tag });
       if (amigoEstado >= 2 && miEstado === 0) candidatosElMeDa.push({ cod, tag });
     }
+    currentSeq += sel.total;
   });
 
   const realesLeDoy = candidatosLeDoy.filter(c => !exclusiones[c.cod]);

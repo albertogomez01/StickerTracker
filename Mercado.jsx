@@ -184,18 +184,33 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogou
   const generarRawListas = (stickersObj) => {
     let faltantes = [];
     let repetidos = [];
-    ALBUMS[albumActivo].selecciones.forEach(sel => {
+    const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
+    const isSequential = albumData.isSequential;
+    let currentSeq = 1;
+    albumData.selecciones.forEach(sel => {
       let fSel = [];
       let rSel = [];
       for (let i = 0; i < sel.total; i++) {
         const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
         const v = stickersObj?.[cod] || 0;
-        if (v === 0) fSel.push(i + 1);
-        else if (v >= 2) rSel.push(v > 2 ? `${i + 1}x${v - 1}` : `${i + 1}`);
+        const absNum = currentSeq + i;
+        if (isSequential) {
+          if (v === 0) faltantes.push(absNum);
+          else if (v >= 2) repetidos.push(v > 2 ? `${absNum}x${v - 1}` : `${absNum}`);
+        } else {
+          if (v === 0) fSel.push(i + 1);
+          else if (v >= 2) rSel.push(v > 2 ? `${i + 1}x${v - 1}` : `${i + 1}`);
+        }
       }
-      if (fSel.length > 0) faltantes.push(`${sel.id}: ${fSel.join(', ')}`);
-      if (rSel.length > 0) repetidos.push(`${sel.id}: ${rSel.join(', ')}`);
+      if (!isSequential) {
+        if (fSel.length > 0) faltantes.push(`${sel.id}: ${fSel.join(', ')}`);
+        if (rSel.length > 0) repetidos.push(`${sel.id}: ${rSel.join(', ')}`);
+      }
+      currentSeq += sel.total;
     });
+    if (isSequential) {
+      return { rawFaltantes: faltantes.join(', '), rawRepetidos: repetidos.join(', ') };
+    }
     return { rawFaltantes: faltantes.join('\n'), rawRepetidos: repetidos.join('\n') };
   };
 

@@ -114,6 +114,7 @@ export const ALBUMS = {
     id: 'liga_2026',
     nombre: 'Adrenalyn LALIGA',
     totalStickers: 478,
+    isSequential: true,
     selecciones: [
       { id: 'L26_ALA', alias: 'ALA', nombre: 'D. Alavés', total: 18 },
       { id: 'L26_ATH', alias: 'ATH', nombre: 'Athletic Club', total: 18 },
@@ -180,6 +181,7 @@ export const ALBUMS = {
     id: 'copa_america_2024',
     nombre: 'Copa América 2024',
     totalStickers: 430,
+    isSequential: true,
     selecciones: [
       { id: 'INT', nombre: 'Introducción', total: 4 },
       { id: 'EST', nombre: 'Estadios', total: 14 },
@@ -210,7 +212,9 @@ export const LOGO_URL = "https://media.base44.com/images/public/6a2595c43f4f5e19
 
 export const parsearTextoAStickers = (texto, tipo, albumId, baseStickers = {}) => {
   let copia = { ...baseStickers };
-  const seleccionesAlbum = ALBUMS[albumId].selecciones;
+  const albumData = ALBUMS[albumId];
+  const seleccionesAlbum = albumData.selecciones;
+  const isSequential = albumData.isSequential;
 
   if (tipo === 'faltantes') {
     seleccionesAlbum.forEach(sel => {
@@ -219,6 +223,51 @@ export const parsearTextoAStickers = (texto, tipo, albumId, baseStickers = {}) =
         if (!copia[codCromo] || copia[codCromo] === 0) copia[codCromo] = 1;
       }
     });
+  }
+
+  if (isSequential) {
+    const numToCode = {};
+    let currentSeq = 1;
+    seleccionesAlbum.forEach(sel => {
+      for(let i = 0; i < sel.total; i++) {
+        numToCode[currentSeq + i] = `${sel.id}_${i.toString().padStart(2, '0')}`;
+      }
+      currentSeq += sel.total;
+    });
+
+    const tokens = texto.replace(/\n/g, ',').split(',');
+    tokens.forEach(item => {
+      const limpio = item.trim();
+      if (!limpio) return;
+
+      let numerosAProcesar = [];
+      if (limpio.includes('-')) {
+        const partes = limpio.split('-');
+        const inicio = parseInt(partes[0].trim(), 10);
+        const fin = parseInt(partes[partes.length - 1].trim(), 10);
+        if (!isNaN(inicio) && !isNaN(fin)) {
+          for (let n = inicio; n <= fin; n++) numerosAProcesar.push({ num: n, repes: 1 });
+        }
+      } else {
+        let numTexto = limpio;
+        let cantidadRepetidos = 1;
+        if (limpio.toLowerCase().includes('x')) {
+          const [n, c] = limpio.toLowerCase().split('x');
+          numTexto = n.trim();
+          cantidadRepetidos = parseInt(c.trim(), 10) || 1;
+        }
+        const numeroVisual = parseInt(numTexto, 10);
+        if (!isNaN(numeroVisual)) numerosAProcesar.push({ num: numeroVisual, repes: cantidadRepetidos });
+      }
+
+      numerosAProcesar.forEach(({ num, repes }) => {
+        const codCromo = numToCode[num];
+        if (!codCromo) return;
+        if (tipo === 'faltantes') copia[codCromo] = 0;
+        else if (tipo === 'repetidos') copia[codCromo] = 1 + repes;
+      });
+    });
+    return copia;
   }
 
   const lineas = texto.split('\n');

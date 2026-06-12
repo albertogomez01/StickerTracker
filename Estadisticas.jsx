@@ -207,9 +207,18 @@ export default function Estadisticas({ albumActivo, perfil }) {
             {selCotizador && (
               <select className="input-field" value={numCotizador} onChange={e => { setNumCotizador(e.target.value); setStatsCotizador(null); }} style={{ marginBottom: '14px', padding: '10px 14px' }}>
                 <option value="">Selecciona el cromo...</option>
-                {Array.from({ length: selInfo?.total || 0 }).map((_, i) => (
-                  <option key={i} value={i + 1}>{i === 0 ? 'Escudo' : `Cromo ${i + 1}`}</option>
-                ))}
+                {Array.from({ length: selInfo?.total || 0 }).map((_, i) => {
+                  let tag = i === 0 ? 'Escudo' : `Cromo ${i + 1}`;
+                  if (albumInfo.isSequential) {
+                    let currentSeq = 1;
+                    for (let s of albumInfo.selecciones) {
+                      if (s.id === selInfo.id) break;
+                      currentSeq += s.total;
+                    }
+                    tag = `Cromo ${currentSeq + i}`;
+                  }
+                  return <option key={i} value={i + 1}>{tag}</option>;
+                })}
               </select>
             )}
 
