@@ -8,6 +8,7 @@ import Footer from './Footer';
 import { db, auth } from './firebase';
 import { doc, getDoc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { signOut, onAuthStateChanged, deleteUser } from 'firebase/auth';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -93,11 +94,34 @@ export default function App() {
   }, [albumActivo]);
 
   useEffect(() => {
-    // Pedir permiso para enviar notificaciones web (si el navegador lo soporta)
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
+    const initFCM = async () => {
+      if (!perfil || perfil.id.startsWith('invitado_')) return;
+      if (!('Notification' in window)) return;
+      
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const messaging = getMessaging(auth.app);
+          
+          const currentToken = await getToken(messaging, { 
+            vapidKey: 'BH3vp1lZuGRH93hctIbqdUx3JwpdCN2swoGTmH17S2l_W_lPwRenMJItnUSdD6Hn157jOYgleWYl-rJLDuoPWLQ' 
+          });
+          
+          if (currentToken) {
+            // Guardamos el token FCM en el perfil del usuario para enviarle notificaciones luego
+            await setDoc(doc(db, 'usuarios', perfil.id), { fcmToken: currentToken }, { merge: true });
+          }
+          
+          onMessage(messaging, (payload) => {
+            toast.success(`${payload.notification.title}: ${payload.notification.body}`);
+          });
+        }
+      } catch (e) {
+        console.error("No se pudo inicializar Firebase Cloud Messaging:", e);
+      }
+    };
+    initFCM();
+  }, [perfil?.id]);
 
   useEffect(() => {
     // Escuchar cuando el dispositivo este listo para instalar la PWA
@@ -206,13 +230,15 @@ export default function App() {
         const noLeidas = data.filter(n => !n.read);
         
         if (noLeidas.length > 0) {
-          // Lanzar notificación nativa por cada aviso no leído
-          if ("Notification" in window && Notification.permission === "granted") {
-            noLeidas.forEach(n => new Notification("Nuevo Intercambio", { body: n.text, icon: 'https://media.base44.com/images/public/6a2595c43f4f5e19a4497bd1/5bd12f067_logo.png' }));
-          } else {
-            // Fallback: usar un alert estándar si no dio permisos
-            toast("Nueva notificación:\n" + noLeidas.map(n => n.text).join('\n'));
-          }
+          noLeidas.forEach(n => {
+            // Si la app está en segundo plano y hay permisos, lanzamos push nativa
+            if ("Notification" in window && Notification.permission === "granted" && document.visibilityState !== "visible") {
+              new Notification(n.title || "Nueva Notificación", { body: n.text, icon: LOGO_URL });
+            } else {
+              // Si la app está abierta o no hay permisos, usamos un toast integrado
+              toast.success(`${n.title || "Nueva Notificación"}: ${n.text}`, { duration: 4000 });
+            }
+          });
           
           // Marcar como leídas automáticamente en Firestore para no repetir
           const marcadas = data.map(n => ({ ...n, read: true }));

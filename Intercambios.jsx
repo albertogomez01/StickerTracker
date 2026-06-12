@@ -11,6 +11,7 @@ export default function Intercambios({ perfil, albumActivo, onLogout }) {
   const [nuevoAmigoNombre, setNuevoAmigoNombre] = useState('');
   const [busquedaAmigo, setBusquedaAmigo] = useState('');
   const [soloCompatibles, setSoloCompatibles] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const [chatAmigo, setChatAmigo] = useState(null);
   const [mensajes, setMensajes] = useState([]);
@@ -80,12 +81,47 @@ export default function Intercambios({ perfil, albumActivo, onLogout }) {
       const notifRef = doc(db, 'notificaciones', chatAmigo.id);
       const notifSnap = await getDoc(notifRef);
       let notifs = notifSnap.exists() ? (notifSnap.data().lista || []) : [];
-      notifs.push({ id: Date.now().toString(), text: `@${perfil.nickname} te ha enviado un mensaje.`, read: false });
+      notifs.push({ 
+        id: Date.now().toString(), 
+        title: `Nuevo mensaje de @${perfil.nickname}`, 
+        text: textoMensaje.length > 40 ? textoMensaje.substring(0, 40) + '...' : textoMensaje, 
+        read: false 
+      });
       await setDoc(notifRef, { lista: notifs });
     } catch(err) {
       console.error(err);
       toast.error("Error al enviar el mensaje");
     }
+  };
+
+  const sincronizarAmigos = async () => {
+    setIsSyncing(true);
+    try {
+      let hayCambios = false;
+      const nuevaLista = await Promise.all(comunidadUsuarios.map(async (amigo) => {
+        if (!String(amigo.id).startsWith('u_')) {
+          const snap = await getDoc(doc(db, getCol('mercado'), amigo.id));
+          if (snap.exists()) {
+            const data = snap.data();
+            if (JSON.stringify(amigo.stickers) !== JSON.stringify(data.stickers) || amigo.nickname !== data.nickname || amigo.photoURL !== data.photoURL) {
+              hayCambios = true;
+              return { ...amigo, stickers: data.stickers, nickname: data.nickname, photoURL: data.photoURL || null };
+            }
+          }
+        }
+        return amigo;
+      }));
+      if (hayCambios) {
+        guardarEnNube(nuevaLista);
+        toast.success("Listas de amigos sincronizadas");
+      } else {
+        toast("Tus amigos ya están al día");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al sincronizar amigos");
+    }
+    setIsSyncing(false);
   };
 
   useEffect(() => {
@@ -139,28 +175,27 @@ export default function Intercambios({ perfil, albumActivo, onLogout }) {
     });
   };
 
-  const amigosFiltrados = comunidadUsuarios.filter(u => {
-    const coincideTexto = u.nickname.toLowerCase().includes(busquedaAmigo.toLowerCase());
-    if (!coincideTexto) return false;
-
-    if (soloCompatibles) {
-      let compatible = false;
-      for (const sel of ALBUMS[albumActivo].selecciones) {
-        for (let i = 0; i < sel.total; i++) {
-          const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
-          const miEstado = perfil?.stickers?.[cod] || 0;
-          const suEstado = u.stickers?.[cod] || 0;
-          if ((miEstado >= 2 && suEstado === 0) || (suEstado >= 2 && miEstado === 0)) {
-            compatible = true;
-            break;
-          }
+  const amigosCalculados = comunidadUsuarios.map(u => {
+    let compatible = false;
+    let score = 0;
+    for (const sel of ALBUMS[albumActivo].selecciones) {
+      for (let i = 0; i < sel.total; i++) {
+        const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+        const miEstado = perfil?.stickers?.[cod] || 0;
+        const suEstado = u.stickers?.[cod] || 0;
+        if ((miEstado >= 2 && suEstado === 0) || (suEstado >= 2 && miEstado === 0)) {
+          compatible = true;
+          score++;
         }
-        if (compatible) break;
       }
-      return compatible;
     }
-    return true;
+    return { ...u, compatible, score };
   });
+
+  let amigosFiltrados = amigosCalculados.filter(u => u.nickname.toLowerCase().includes(busquedaAmigo.toLowerCase()));
+  if (soloCompatibles) {
+    amigosFiltrados = amigosFiltrados.filter(u => u.compatible).sort((a, b) => b.score - a.score);
+  }
 
   if (perfil?.id?.startsWith('invitado_')) {
     return (
@@ -216,19 +251,56 @@ export default function Intercambios({ perfil, albumActivo, onLogout }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div className="card">
-        <label style={{ fontSize: '14px', fontWeight: '700', display: 'block', marginBottom: '8px' }}>Buscar usuario por apodo</label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--accent-primary)' }}>Mis Amigos</h3>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{comunidadUsuarios.length} usuarios en lista</span>
+          </div>
+          <button onClick={sincronizarAmigos} disabled={isSyncing} className="btn-secondary" style={{ padding: '8px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '10px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isSyncing ? "logo-spin" : ""}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            {isSyncing ? 'Sincronizando...' : 'Actualizar'}
+          </button>
+        </div>
+
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-          <input type="text" value={busquedaAmigo} onChange={(e) => setBusquedaAmigo(e.target.value)} placeholder="Apodo del amigo..." className="input-field" style={{ flex: 1 }} />
+          <input type="text" value={busquedaAmigo} onChange={(e) => setBusquedaAmigo(e.target.value)} placeholder="Buscar amigo..." className="input-field" style={{ flex: 1, padding: '10px 14px' }} />
           <button type="button" onClick={() => setSoloCompatibles(!soloCompatibles)} className={soloCompatibles ? "btn-primary" : "btn-secondary"} style={{ padding: '0 12px', fontSize: '13px', background: soloCompatibles ? '#10B981' : '', color: soloCompatibles ? '#FFF' : '', borderColor: soloCompatibles ? '#10B981' : '' }}>
             {soloCompatibles ? 'Compatibles' : 'Todos'}
           </button>
         </div>
-        <form onSubmit={añadirAmigoNuevo} style={{ borderTop: '1px solid #F1F5F9', paddingTop: '14px', display: 'flex', gap: '8px' }}>
-          <input type="text" value={nuevoAmigoNombre} onChange={(e) => setNuevoAmigoNombre(e.target.value)} placeholder="Nombre del amigo..." className="input-field" style={{ flex: 1, fontSize: '14px' }} />
-          <button type="submit" className="btn-primary" style={{ background: '#6EE7B7', color: '#0F766E' }}>Añadir</button>
-        </form>
+
+        <details style={{ background: 'var(--bg-input)', borderRadius: '12px', padding: '12px', border: '1px solid var(--border-primary)' }}>
+          <summary style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}>+ Añadir amigo manualmente (Offline)</summary>
+          <form onSubmit={añadirAmigoNuevo} style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <input type="text" value={nuevoAmigoNombre} onChange={(e) => setNuevoAmigoNombre(e.target.value)} placeholder="Nombre del amigo offline..." className="input-field" style={{ flex: 1, fontSize: '13px', padding: '10px' }} />
+            <button type="submit" className="btn-primary" style={{ background: '#6EE7B7', color: '#0F766E', padding: '10px 16px' }}>Añadir</button>
+          </form>
+        </details>
       </div>
-      {amigosFiltrados.length === 0 ? (
+      {!datosCargados ? (
+        <>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div className="skeleton-box" style={{ width: '32px', height: '32px', borderRadius: '50%' }}></div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div className="skeleton-box" style={{ width: '120px', height: '16px' }}></div>
+                    <div className="skeleton-box" style={{ width: '60px', height: '12px' }}></div>
+                  </div>
+                </div>
+                <div className="skeleton-box" style={{ width: '80px', height: '22px', borderRadius: '99px' }}></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                <div className="skeleton-box" style={{ height: '45px', borderRadius: '8px' }}></div>
+                <div className="skeleton-box" style={{ height: '45px', borderRadius: '8px' }}></div>
+                <div className="skeleton-box" style={{ height: '45px', borderRadius: '8px' }}></div>
+              </div>
+              <div className="skeleton-box" style={{ height: '120px', borderRadius: '12px' }}></div>
+            </div>
+          ))}
+        </>
+      ) : amigosFiltrados.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', color: '#94A3B8', fontSize: '14px' }}>No tienes amigos en la lista. Escribe un nombre arriba para añadirlo.</div>
       ) : (
         amigosFiltrados.map(amigo => (

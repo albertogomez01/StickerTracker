@@ -30,6 +30,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogou
   const [solicitudesEnviadas, setSolicitudesEnviadas] = useState([]);
   const [publicado, setPublicado] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [tab, setTab] = useState('explorar');
   const [busquedaMercado, setBusquedaMercado] = useState('');
   const [comunidadActiva, setComunidadActiva] = useState('');
@@ -113,7 +114,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogou
   };
 
   const buscarMatches = async () => {
-    setLoading(true);
+    setIsSearching(true);
     try {
       const qMercado = query(collection(db, getCol('mercado')), orderBy('timestamp', 'desc'), limit(50));
       const querySnapshot = await getDocs(qMercado);
@@ -151,7 +152,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogou
       console.error(e);
       toast.error("Error al buscar en el mercado.");
     }
-    setLoading(false);
+    setIsSearching(false);
   };
 
   const enviarSolicitud = async (matchUser) => {
@@ -231,7 +232,12 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogou
       const notifRef = doc(db, 'notificaciones', solicitud.from);
       const notifSnap = await getDoc(notifRef);
       let notifs = notifSnap.exists() ? (notifSnap.data().lista || []) : [];
-      notifs.push({ id: Date.now().toString(), text: `@${perfil.nickname} ha aceptado tu solicitud de intercambio.`, read: false });
+      notifs.push({ 
+        id: Date.now().toString(), 
+        title: "¡Solicitud Aceptada!", 
+        text: `@${perfil.nickname} ha aceptado tu solicitud de intercambio.`, 
+        read: false 
+      });
       await setDoc(notifRef, { lista: notifs });
 
       // 5. Cambiar a la pestaña de intercambios directamente
@@ -339,9 +345,25 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogou
             <button onClick={togglePublicar} className={publicado ? "btn-danger" : "btn-primary"} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} disabled={loading}>{loading ? 'Procesando...' : (publicado ? 'Ocultar mi perfil del Mercado' : 'Publicar mi lista en el Mercado')}</button>
           </div>
           <div className="card" style={{ padding: '12px' }}>
-            <button onClick={buscarMatches} className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }} disabled={loading}>{loading ? 'Buscando...' : 'Buscar Intercambios Compatibles'}</button>
+            <button onClick={buscarMatches} className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }} disabled={isSearching}>{isSearching ? 'Buscando...' : 'Buscar Intercambios Compatibles'}</button>
           </div>
-          {usuariosMercado.length > 0 && (
+          {isSearching ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <h4 style={{ margin: '0 4px', fontSize: '14px', color: 'var(--text-secondary)' }}>Buscando usuarios...</h4>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="skeleton-box" style={{ width: '36px', height: '36px', borderRadius: '50%' }}></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div className="skeleton-box" style={{ width: '120px', height: '15px' }}></div>
+                      <div className="skeleton-box" style={{ width: '150px', height: '12px' }}></div>
+                    </div>
+                  </div>
+                  <div className="skeleton-box" style={{ width: '80px', height: '32px', borderRadius: '10px' }}></div>
+                </div>
+              ))}
+            </div>
+          ) : usuariosMercado.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <input type="text" value={busquedaMercado} onChange={(e) => setBusquedaMercado(e.target.value)} placeholder="Filtrar por nombre..." className="input-field" style={{ padding: '10px 14px', fontSize: '14px' }} />
               <h4 style={{ margin: '0 4px', fontSize: '14px', color: 'var(--text-secondary)' }}>Resultados ({usuariosFiltrados.length})</h4>

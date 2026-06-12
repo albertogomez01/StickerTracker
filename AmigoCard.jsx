@@ -35,6 +35,8 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
     return () => unsub();
   }, [amigo.id]);
 
+  const isManual = String(amigo.id).startsWith('u_');
+
   const seleccionesAlbum = ALBUMS[albumActivo]?.selecciones || [];
 
   let fCount = 0; let tCount = 0; let rCount = 0;
@@ -82,11 +84,11 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontWeight: '700', fontSize: '16px' }}>{amigo.nickname}</span>
-            <span style={{ fontSize: '11px', color: isOnline ? '#10B981' : 'var(--text-secondary)' }}>{isOnline ? 'En línea' : 'Desconectado'}</span>
+          <span style={{ fontSize: '11px', color: isOnline ? '#10B981' : 'var(--text-secondary)' }}>{isManual ? 'Modo local' : (isOnline ? 'En línea' : 'Desconectado')}</span>
           </div>
         </div>
-        <span style={{ background: '#F1F5F9', color: '#475569', fontSize: '11px', padding: '4px 10px', borderRadius: '99px' }}>
-          {realesLeDoy.length > 0 || realesElMeDa.length > 0 ? 'Intercambio Listo' : 'Pocos en común'}
+      <span style={{ background: (realesLeDoy.length + realesElMeDa.length) > 0 ? '#ECFDF5' : '#F1F5F9', color: (realesLeDoy.length + realesElMeDa.length) > 0 ? '#059669' : '#475569', fontSize: '11px', padding: '4px 10px', borderRadius: '99px', fontWeight: 'bold' }}>
+        {(realesLeDoy.length + realesElMeDa.length) > 0 ? `🔥 ${(realesLeDoy.length + realesElMeDa.length)} útiles` : 'Pocos en común'}
         </span>
       </div>
 
@@ -171,8 +173,8 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button onClick={() => onOpenChat(amigo)} className="btn-primary" style={{ flex: '1 1 100%', background: '#3B82F6', color: '#FFF' }}>Abrir Chat Privado</button>
-            <button onClick={() => { setFaltantesInput(amigo.rawFaltantes || ''); setRepetidosInput(amigo.rawRepetidos || ''); setColorInput(amigo.avatarColor || AVATAR_COLORS[0]); setIsEditing(true); }} className="btn-secondary" style={{ flex: '1 1 30%' }}>Editar</button>
+            {!isManual && <button onClick={() => onOpenChat(amigo)} className="btn-primary" style={{ flex: '1 1 100%', background: '#3B82F6', color: '#FFF' }}>Abrir Chat Privado</button>}
+            {isManual && <button onClick={() => { setFaltantesInput(amigo.rawFaltantes || ''); setRepetidosInput(amigo.rawRepetidos || ''); setColorInput(amigo.avatarColor || AVATAR_COLORS[0]); setIsEditing(true); }} className="btn-secondary" style={{ flex: '1 1 30%' }}>Editar</button>}
             <button onClick={() => generarImagenTrueque(perfil?.nickname || 'Yo', amigo.nickname, realesLeDoy.map(x=>x.tag), realesElMeDa.map(x=>x.tag))} className="btn-primary" style={{ flex: '1 1 50%' }}>Compartir</button>
             <button onClick={() => onEliminar(amigo.id)} className="btn-danger" style={{ flex: '1 1 100%' }}>Eliminar</button>
           </div>

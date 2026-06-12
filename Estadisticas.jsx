@@ -131,7 +131,21 @@ export default function Estadisticas({ albumActivo, perfil }) {
             </div>
           )}
           {loading ? (
-            <div className="card" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Cargando ranking...</div>
+            <div className="card" style={{ padding: '0' }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: i < 5 ? '1px solid var(--border-primary)' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="skeleton-box" style={{ width: '24px', height: '16px' }}></div>
+                    <div className="skeleton-box" style={{ width: '28px', height: '28px', borderRadius: '50%' }}></div>
+                    <div className="skeleton-box" style={{ width: '100px', height: '16px' }}></div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="skeleton-box" style={{ width: '60px', height: '12px' }}></div>
+                    <div className="skeleton-box" style={{ width: '40px', height: '22px', borderRadius: '8px' }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : ranking.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay datos suficientes en el mercado.</div>
           ) : (
