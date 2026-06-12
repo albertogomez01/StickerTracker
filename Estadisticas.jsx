@@ -41,7 +41,7 @@ export default function Estadisticas({ albumActivo, perfil }) {
     return mercadoData.map(u => {
       let tCount = 0;
       for (const cod in u.stickers) {
-        if (u.stickers[cod] >= 1) tCount++;
+        if (u.stickers[cod] >= 1 && !cod.startsWith('EXT26_')) tCount++;
       }
       const pct = Math.round((tCount / albumInfo.totalStickers) * 100) || 0;
       return { ...u, pct, tCount };
@@ -53,8 +53,10 @@ export default function Estadisticas({ albumActivo, perfil }) {
     let tCount = 0;
     let rCount = 0;
     for (const cod in perfil.stickers) {
-      if (perfil.stickers[cod] >= 1) tCount++;
-      if (perfil.stickers[cod] >= 2) rCount += (perfil.stickers[cod] - 1);
+      if (!cod.startsWith('EXT26_')) {
+        if (perfil.stickers[cod] >= 1) tCount++;
+        if (perfil.stickers[cod] >= 2) rCount += (perfil.stickers[cod] - 1);
+      }
     }
     const myRank = ranking.findIndex(u => u.id === perfil.id) + 1;
     return { tCount, rCount, pct: Math.round((tCount / albumInfo.totalStickers) * 100) || 0, rank: myRank };

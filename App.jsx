@@ -607,6 +607,7 @@ export default function App() {
     let tCount = 0; let rCount = 0; let fCount = 0;
     const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
     albumData.selecciones.forEach(sel => {
+      if (sel.id === 'EXT26') return; // Excluimos los Extra Stickers del progreso general
       for (let i = 0; i < sel.total; i++) {
         const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
         const v = perfil?.stickers?.[cod] || 0;

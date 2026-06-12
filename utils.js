@@ -55,7 +55,7 @@ export const ALBUMS = {
   'mundial_2026': {
     id: 'mundial_2026',
     nombre: 'Mundial 2026',
-    totalStickers: 1072,
+    totalStickers: 992,
     selecciones: [
       { id: 'FWC', nombre: 'FWC', total: 20 },
       { id: 'MEX', nombre: 'México', total: 20, flagCode: 'mx' },
@@ -205,7 +205,7 @@ export const ALBUMS = {
   }
 };
 
-export const TOTAL_STICKERS = 1072;
+export const TOTAL_STICKERS = 992;
 export const LOGO_URL = "https://media.base44.com/images/public/6a2595c43f4f5e19a4497bd1/5bd12f067_logo.png";
 
 export const parsearTextoAStickers = (texto, tipo, albumId, baseStickers = {}) => {

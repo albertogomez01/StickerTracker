@@ -39,6 +39,7 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
 
   let fCount = 0; let tCount = 0; let rCount = 0;
   seleccionesAlbum.forEach(s => {
+    if (s.id === 'EXT26') return; // Excluimos los Extra Stickers de sus estadísticas
     for (let i = 0; i < s.total; i++) {
       const status = amigo.stickers?.[`${s.id}_${i.toString().padStart(2, '0')}`] || 0;
       if (status === 0) fCount++;
