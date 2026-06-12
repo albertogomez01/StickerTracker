@@ -13,7 +13,7 @@ const EXTRA_PLAYERS = [
 ];
 const EXTRA_VARIANTS = ["Base", "Bronce", "Plata", "Oro"];
 
-export default function Album({ perfil, alternarCromoManual, marcarEquipoCompleto, isMuted, albumActivo }) {
+export default function Album({ perfil, alternarCromoManual, marcarEquipoCompleto, isMuted, albumActivo, deshacerUltimo, undoCount }) {
   const [seleccionExpandida, setSeleccionExpandida] = useState(null);
   const [animatingSticker, setAnimatingSticker] = useState(null);
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'faltantes', 'repetidos'
@@ -136,8 +136,14 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div className="card" style={{ padding: '12px' }}>
-        <input type="text" value={busquedaAlbum} onChange={(e) => { setBusquedaAlbum(e.target.value); setSeleccionExpandida(null); }} placeholder="Buscar país o código (ej: Argentina, ARG)..." className="input-field" style={{ padding: '10px 14px', fontSize: '14px' }} />
+      <div className="card" style={{ padding: '12px', display: 'flex', gap: '8px' }}>
+        <input type="text" value={busquedaAlbum} onChange={(e) => { setBusquedaAlbum(e.target.value); setSeleccionExpandida(null); }} placeholder="Buscar país o código (ej: Argentina, ARG)..." className="input-field" style={{ flex: 1, padding: '10px 14px', fontSize: '14px' }} />
+        {undoCount > 0 && (
+          <button onClick={deshacerUltimo} className="btn-secondary" style={{ padding: '0 12px', display: 'flex', alignItems: 'center', gap: '6px', color: '#EF4444', borderColor: '#FCA5A5', background: '#FEF2F2', whiteSpace: 'nowrap', fontWeight: 'bold', fontSize: '13px' }} title="Deshacer último cambio">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            Deshacer ({undoCount})
+          </button>
+        )}
       </div>
 
       <div className="card" style={{ display: 'flex', gap: '8px', padding: '12px' }}>
@@ -184,45 +190,82 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
                     </button>
                   </div>
                 )}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
-                  {Array.from({ length: sel.total })
-                  .map((_, index) => {
-                    const numeroVisual = index + 1;
-                    const codigo = `${sel.id}_${index.toString().padStart(2, '0')}`;
-                    const estado = perfil.stickers?.[codigo] || 0;
-                    return { codigo, numeroVisual, estado };
-                  })
-                  .filter(s => {
-                    if (filtro === 'faltantes') return s.estado === 0;
-                    if (filtro === 'repetidos') return s.estado >= 2;
-                    return true;
-                  })
-                  .map(s => {
-                    let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
-                    let txt = '';
-                    if (sel.id === 'EXT26') {
-                      const pIdx = Math.floor((s.numeroVisual - 1) / 4);
-                      const vIdx = (s.numeroVisual - 1) % 4;
-                      txt = `${EXTRA_PLAYERS[pIdx] || 'Extra'} (${EXTRA_VARIANTS[vIdx]})`;
-                    } else {
-                      txt = s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`;
-                    }
-                    if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
-                    
-                    const esDificil = dificiles.has(s.codigo);
+                {(() => {
+                  const stickersData = Array.from({ length: sel.total })
+                    .map((_, index) => {
+                      const numeroVisual = index + 1;
+                      const codigo = `${sel.id}_${index.toString().padStart(2, '0')}`;
+                      const estado = perfil.stickers?.[codigo] || 0;
+                      return { codigo, numeroVisual, estado };
+                    })
+                    .filter(s => {
+                      if (filtro === 'faltantes') return s.estado === 0;
+                      if (filtro === 'repetidos') return s.estado >= 2;
+                      return true;
+                    });
 
+                  if (sel.id === 'EXT26') {
                     return (
-                      <button key={s.codigo} onClick={() => handleStickerClick(s.codigo)} className={`sticker-btn ${animatingSticker === s.codigo ? 'animate-pop' : ''}`} style={{ background: bg, position: 'relative' }}>
-                        {esDificil && (
-                          <div style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-card)', borderRadius: '50%', padding: '2px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', display: 'flex', zIndex: 10 }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#EAB308" stroke="#CA8A04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                          </div>
-                        )}
-                        {txt}
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {EXTRA_PLAYERS.map((player, pIdx) => {
+                          const playerStickers = stickersData.filter(s => Math.floor((s.numeroVisual - 1) / 4) === pIdx);
+                          if (playerStickers.length === 0) return null;
+                          return (
+                            <div key={player} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', padding: '10px', borderRadius: '12px' }}>
+                              <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                ⚽ {player}
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                                {playerStickers.map(s => {
+                                  const vIdx = (s.numeroVisual - 1) % 4;
+                                  const variantName = EXTRA_VARIANTS[vIdx];
+                                  const vColors = ['#E2E8F0', '#B45309', '#94A3B8', '#EAB308'];
+                                  let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
+                                  let txt = variantName;
+                                  if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
+                                  const esDificil = dificiles.has(s.codigo);
+
+                                  return (
+                                    <button key={s.codigo} onClick={() => handleStickerClick(s.codigo)} className={`sticker-btn ${animatingSticker === s.codigo ? 'animate-pop' : ''}`} style={{ background: bg, position: 'relative', borderBottom: `3px solid ${vColors[vIdx]}`, padding: '6px 4px', fontSize: '11px' }}>
+                                      {esDificil && (
+                                        <div style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-card)', borderRadius: '50%', padding: '2px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', display: 'flex', zIndex: 10 }}>
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#EAB308" stroke="#CA8A04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        </div>
+                                      )}
+                                      {txt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     );
-                  })}
-                </div>
+                  }
+
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
+                      {stickersData.map(s => {
+                        let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
+                        let txt = s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`;
+                        if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
+                        const esDificil = dificiles.has(s.codigo);
+
+                        return (
+                          <button key={s.codigo} onClick={() => handleStickerClick(s.codigo)} className={`sticker-btn ${animatingSticker === s.codigo ? 'animate-pop' : ''}`} style={{ background: bg, position: 'relative' }}>
+                            {esDificil && (
+                              <div style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-card)', borderRadius: '50%', padding: '2px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', display: 'flex', zIndex: 10 }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#EAB308" stroke="#CA8A04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                              </div>
+                            )}
+                            {txt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

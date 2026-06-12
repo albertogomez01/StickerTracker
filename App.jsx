@@ -23,7 +23,8 @@ export default function App() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [albumActivo, setAlbumActivo] = useState(() => localStorage.getItem('panini_album') || 'mundial_2026');
   const saveTimeoutRef = useRef(null);
-  const lastActionRef = useRef(null);
+  const actionHistoryRef = useRef([]);
+  const [undoCount, setUndoCount] = useState(0);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [isNetworkOnline, setIsNetworkOnline] = useState(navigator.onLine);
   const [perfil, setPerfil] = useState(() => {
@@ -464,7 +465,11 @@ export default function App() {
     }
   };
 
-  const deshacerCromo = (codigo, valorPrevio) => {
+  const deshacerUltimo = () => {
+    if (actionHistoryRef.current.length === 0) return;
+    const { codigo, valorPrevio } = actionHistoryRef.current.pop();
+    setUndoCount(actionHistoryRef.current.length);
+
     setPerfil(prev => {
       const copia = { ...prev.stickers };
       copia[codigo] = valorPrevio;
@@ -487,11 +492,9 @@ export default function App() {
         const tag = e.target.tagName.toLowerCase();
         if (tag === 'input' || tag === 'textarea') return;
 
-        if (lastActionRef.current) {
+        if (actionHistoryRef.current.length > 0) {
           e.preventDefault();
-          const { codigo, valorPrevio } = lastActionRef.current;
-          deshacerCromo(codigo, valorPrevio);
-          lastActionRef.current = null; // Limpiar para no deshacer 2 veces seguidas
+          deshacerUltimo();
         }
       }
     };
@@ -502,7 +505,11 @@ export default function App() {
   const alternarCromoManual = (codigo) => {
     // Guardamos en memoria (Ref) cuál era el valor justo antes de que lo toquemos
     const valorPrevio = perfil?.stickers?.[codigo] || 0;
-    lastActionRef.current = { codigo, valorPrevio };
+    actionHistoryRef.current.push({ codigo, valorPrevio });
+    if (actionHistoryRef.current.length > 5) {
+      actionHistoryRef.current.shift(); // Mantenemos el límite máximo en 5
+    }
+    setUndoCount(actionHistoryRef.current.length);
 
     setPerfil(prev => {
       const copia = { ...prev.stickers };
@@ -525,10 +532,7 @@ export default function App() {
         <button 
           onClick={() => {
             toast.dismiss(t.id);
-            if (lastActionRef.current) {
-              deshacerCromo(codigo, valorPrevio);
-              lastActionRef.current = null;
-            }
+            deshacerUltimo();
           }} 
           style={{ background: 'var(--bg-input)', border: '1px solid var(--border-primary)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
         >
@@ -648,7 +652,7 @@ export default function App() {
       </div>
       <div className="content-wrapper">
         <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '14px' }}>Cargando sección...</div>}>
-          {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} marcarEquipoCompleto={marcarEquipoCompleto} isMuted={isMuted} albumActivo={albumActivo} />}
+          {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} marcarEquipoCompleto={marcarEquipoCompleto} isMuted={isMuted} albumActivo={albumActivo} deshacerUltimo={deshacerUltimo} undoCount={undoCount} />}
           {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
           {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} onLogout={handleLogout} />}
           {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} onLogout={handleLogout} />}
