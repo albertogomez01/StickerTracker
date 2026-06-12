@@ -93,6 +93,70 @@ export default function App() {
     localStorage.setItem('panini_album', albumActivo);
   }, [albumActivo]);
 
+  // Detectar invitaciones por URL (?ref=USER_ID)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      localStorage.setItem('panini_ref', ref);
+      // Limpiamos la URL para que no quede fea
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  // Procesar la invitación de amigo cuando el usuario haya iniciado sesión correctamente
+  useEffect(() => {
+    if (!perfil || perfil.id.startsWith('invitado_')) return;
+    
+    const refId = localStorage.getItem('panini_ref');
+    if (refId) {
+      if (refId !== perfil.id) {
+        const procesarReferido = async () => {
+          try {
+            const userSnap = await getDoc(doc(db, 'usuarios', refId));
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              toast((t) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 9999 }}>
+                  <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¡@{userData.nickname} te ha invitado!</span>
+                  <span style={{ fontSize: '13px' }}>¿Quieres enviarle una solicitud de intercambio?</span>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <button 
+                      onClick={async () => {
+                        toast.dismiss(t.id);
+                        try {
+                          const colName = albumActivo === 'mundial_2026' ? 'solicitudes' : `solicitudes_${albumActivo}`;
+                          const solRef = doc(db, colName, `${perfil.id}_${refId}`);
+                          await setDoc(solRef, { from: perfil.id, fromNickname: perfil.nickname, fromPhotoURL: perfil.photoURL || null, to: refId, toNickname: userData.nickname, toPhotoURL: userData.photoURL || null, status: 'pending', timestamp: Date.now() });
+                          toast.success(`Solicitud enviada a @${userData.nickname}`);
+                        } catch(e) {
+                          toast.error("Error al enviar solicitud.");
+                        }
+                      }}
+                      style={{ background: 'var(--accent-primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '8px', flex: 1, fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                      Añadir
+                    </button>
+                    <button 
+                      onClick={() => toast.dismiss(t.id)}
+                      style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-primary)', padding: '6px 12px', borderRadius: '8px', flex: 1, fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                      Ignorar
+                    </button>
+                  </div>
+                </div>
+              ), { duration: Infinity, id: 'ref-toast' });
+            }
+          } catch(e) {
+            console.error("Error cargando referido:", e);
+          }
+        };
+        procesarReferido();
+      }
+      localStorage.removeItem('panini_ref');
+    }
+  }, [perfil?.id, albumActivo]);
+
   useEffect(() => {
     const initFCM = async () => {
       if (!perfil || perfil.id.startsWith('invitado_')) return;
