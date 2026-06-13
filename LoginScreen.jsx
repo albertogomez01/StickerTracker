@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { LOGO_URL } from './utils';
 import './App.css';
 import { auth, googleProvider } from './firebase';
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
 
+const Privacidad = lazy(() => import('./Privacidad'));
+const Terminos = lazy(() => import('./Terminos'));
+
 export default function LoginScreen({ onLogin }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(null);
 
   useEffect(() => {
     // Comprueba si el usuario acaba de volver de una redirección de Google (común en iOS)
@@ -98,9 +102,20 @@ export default function LoginScreen({ onLogin }) {
         </button>
 
         <div className="login-footer">
-      Al continuar, aceptas nuestros <a href="#" onClick={(e) => { e.preventDefault(); toast("Los Términos de Servicio estarán disponibles próximamente."); }}>Términos de Servicio</a> y <a href="#" onClick={(e) => { e.preventDefault(); toast("La Política de Privacidad estará disponible próximamente."); }}>Política de Privacidad</a>.
+          Al continuar, aceptas nuestros <a href="#" onClick={(e) => { e.preventDefault(); setShowModal('terminos'); }}>Términos de Servicio</a> y <a href="#" onClick={(e) => { e.preventDefault(); setShowModal('privacidad'); }}>Política de Privacidad</a>.
         </div>
       </div>
+      
+      {showModal && (
+        <div className="modal-overlay" style={{ zIndex: 99999 }}>
+          <div className="card modal-content" style={{ margin: 0, padding: '24px', maxHeight: '85vh', overflowY: 'auto', position: 'relative', textAlign: 'left' }}>
+            <button onClick={() => setShowModal(null)} className="btn-secondary" style={{ position: 'sticky', top: 0, float: 'right', zIndex: 10, padding: '6px 12px', fontSize: '12px' }}>Cerrar</button>
+            <Suspense fallback={<div style={{ textAlign: 'center', padding: '20px' }}>Cargando...</div>}>
+              {showModal === 'privacidad' ? <Privacidad /> : <Terminos />}
+            </Suspense>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
