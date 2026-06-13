@@ -254,7 +254,7 @@ export default function Estadisticas({ albumActivo, perfil }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {logros.map(logro => (
               <div key={logro.id} onClick={() => logro.unl && generarImagenLogro(perfil.nickname, logro)} title={logro.unl ? "Toca para compartir tu medalla" : "Logro bloqueado"} className="card" style={{ margin: 0, filter: logro.unl ? 'none' : 'grayscale(100%) opacity(0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '16px 12px', border: logro.unl ? `1px solid ${logro.color}` : '1px solid var(--border-primary)', boxShadow: logro.unl ? `0 4px 15px ${logro.color}33` : 'none', transition: 'all 0.3s ease', cursor: logro.unl ? 'pointer' : 'default' }}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={logro.unl ? logro.color : 'var(--text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '10px', filter: logro.unl ? `drop-shadow(0 0 8px ${logro.color}66)` : 'none' }}>
+                <svg className={logro.unl ? "medal-unlocked-icon" : ""} width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={logro.unl ? logro.color : 'var(--text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '10px', filter: logro.unl ? `drop-shadow(0 0 8px ${logro.color}66)` : 'none' }}>
                   <circle cx="12" cy="8" r="7"></circle>
                   <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                 </svg>

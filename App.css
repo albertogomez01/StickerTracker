@@ -648,3 +648,17 @@ input, textarea, button, select, a {
   animation: shimmer 2s infinite linear;
   border-radius: 8px;
 }
+
+@keyframes medal-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.medal-unlocked-icon {
+  animation: medal-pulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}

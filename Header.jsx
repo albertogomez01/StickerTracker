@@ -46,6 +46,18 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
     setShowDropdown(false);
   };
 
+  const generarAvatarAleatorio = () => {
+    // Usamos la API de DiceBear para generar avatares ilustrados/3D al instante
+    const estilos = ['micah', 'bottts', 'adventurer', 'lorelei', 'fun-emoji'];
+    const estiloAlAzar = estilos[Math.floor(Math.random() * estilos.length)];
+    const seed = perfil.nickname + Math.floor(Math.random() * 10000);
+    const url = `https://api.dicebear.com/7.x/${estiloAlAzar}/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+    
+    actualizarPerfil({ photoURL: url });
+    setShowDropdown(false);
+    toast.success("¡Avatar mágico generado!", { icon: '✨' });
+  };
+
   return (
     <div className="header">
       <div style={{ position: 'relative' }}>
@@ -116,6 +128,9 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 Cambiar foto
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { cambiarFoto(e); setShowDropdown(false); }} />
               </label>
+              <button onClick={generarAvatarAleatorio} style={{ background: 'transparent', border: 'none', color: 'var(--accent-primary)', padding: '0 12px 12px 12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                ✨ Generar Avatar Aleatorio
+              </button>
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <button onClick={() => { setShowDropdown(false); resetTheme(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
                 Tema Automático (Sistema)

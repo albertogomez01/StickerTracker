@@ -234,6 +234,25 @@ export const generarImagenLogro = async (perfilNickname, logro) => {
   ctx.fillStyle = '#0F172A'; 
   ctx.fillRect(0, 0, 1080, 1920);
 
+  // Efecto de Iluminación Cinemática (Spotlight Radial)
+  const spotlight = ctx.createRadialGradient(540, 845, 50, 540, 845, 700);
+  spotlight.addColorStop(0, logro.color + '66'); // Foco de luz intenso en el centro
+  spotlight.addColorStop(1, 'transparent'); // Se difumina hacia los bordes
+  ctx.fillStyle = spotlight;
+  ctx.fillRect(0, 0, 1080, 1920);
+
+  // Efecto Bokeh (Partículas de luz desenfocadas de fondo)
+  for (let i = 0; i < 40; i++) {
+    ctx.beginPath();
+    const bx = Math.random() * 1080;
+    const by = Math.random() * 1920;
+    const br = Math.random() * 25 + 5;
+    ctx.arc(bx, by, br, 0, Math.PI * 2);
+    // Intercala el color de la medalla con un blanco semitransparente para dar profundidad
+    ctx.fillStyle = Math.random() > 0.5 ? logro.color + '20' : '#FFFFFF10';
+    ctx.fill();
+  }
+
   // 2. Marca de agua
   ctx.save();
   ctx.translate(540, 960);
