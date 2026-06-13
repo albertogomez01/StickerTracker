@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, getDoc, query, where, onSnapshot, limit, orderBy, addDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const REGIONES_ESPANA = {
   "Andalucía": ["Sevilla", "Málaga", "Córdoba", "Granada", "Almería", "Jerez de la Frontera", "Cádiz", "Huelva", "Jaén"],
@@ -24,7 +25,8 @@ const REGIONES_ESPANA = {
   "País Vasco": ["Bilbao", "Vitoria-Gasteiz", "San Sebastián", "Barakaldo"]
 };
 
-export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogout }) {
+export default function Mercado({ perfil, albumActivo, onLogout }) {
+  const navigate = useNavigate();
   const [usuariosMercado, setUsuariosMercado] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [solicitudesEnviadas, setSolicitudesEnviadas] = useState([]);
@@ -256,7 +258,7 @@ export default function Mercado({ perfil, setSeccionActual, albumActivo, onLogou
       await setDoc(notifRef, { lista: notifs });
 
       // 5. Cambiar a la pestaña de intercambios directamente
-      if (setSeccionActual) setSeccionActual('intercambios');
+      navigate('/intercambios');
 
     } catch (e) {
       console.error(e);

@@ -10,7 +10,9 @@ import { doc, getDoc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { signOut, onAuthStateChanged, deleteUser } from 'firebase/auth';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from '@vercel/analytics/react';
 import { Toaster, toast } from 'react-hot-toast';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 const Album = lazy(() => import('./Album'));
 const Importar = lazy(() => import('./Importar'));
@@ -20,7 +22,6 @@ const Estadisticas = lazy(() => import('./Estadisticas'));
 
 export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
-  const [seccionActual, setSeccionActual] = useState('intercambios');
   const [installPrompt, setInstallPrompt] = useState(null);
   const [albumActivo, setAlbumActivo] = useState(() => localStorage.getItem('panini_album') || 'mundial_2026');
   const saveTimeoutRef = useRef(null);
@@ -773,16 +774,20 @@ export default function App() {
       </div>
       <div className="content-wrapper">
         <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '14px' }}>Cargando sección...</div>}>
-          {seccionActual === 'album' && <Album perfil={perfil} alternarCromoManual={alternarCromoManual} marcarEquipoCompleto={marcarEquipoCompleto} vaciarEquipoCompleto={vaciarEquipoCompleto} isMuted={isMuted} albumActivo={albumActivo} deshacerUltimo={deshacerUltimo} undoCount={undoCount} />}
-          {seccionActual === 'importar' && <Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />}
-          {seccionActual === 'intercambios' && <Intercambios perfil={perfil} albumActivo={albumActivo} onLogout={handleLogout} />}
-          {seccionActual === 'mercado' && <Mercado perfil={perfil} setSeccionActual={setSeccionActual} albumActivo={albumActivo} onLogout={handleLogout} />}
-          {seccionActual === 'stats' && <Estadisticas albumActivo={albumActivo} perfil={perfil} />}
+          <Routes>
+            <Route path="/album" element={<Album perfil={perfil} alternarCromoManual={alternarCromoManual} marcarEquipoCompleto={marcarEquipoCompleto} vaciarEquipoCompleto={vaciarEquipoCompleto} isMuted={isMuted} albumActivo={albumActivo} deshacerUltimo={deshacerUltimo} undoCount={undoCount} />} />
+            <Route path="/importar" element={<Importar procesarImportadorTexto={procesarImportadorTexto} perfil={perfil} albumActivo={albumActivo} />} />
+            <Route path="/intercambios" element={<Intercambios perfil={perfil} albumActivo={albumActivo} onLogout={handleLogout} />} />
+            <Route path="/mercado" element={<Mercado perfil={perfil} albumActivo={albumActivo} onLogout={handleLogout} />} />
+            <Route path="/stats" element={<Estadisticas albumActivo={albumActivo} perfil={perfil} />} />
+            <Route path="*" element={<Navigate to="/intercambios" replace />} />
+          </Routes>
         </Suspense>
       </div>
-      <Footer seccionActual={seccionActual} setSeccionActual={setSeccionActual} />
+      <Footer />
       
       <SpeedInsights />
+      <Analytics />
       <Toaster 
         position="bottom-center" 
         toastOptions={{
