@@ -1,11 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from './firebase';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, doc, updateDoc, increment } from 'firebase/firestore';
 import { ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
+import { generarImagenLogro } from './canvasUtils';
+
+// Sistema de medallas según referidos
+const getMedalla = (count) => {
+  if (!count) return null;
+  if (count >= 25) return { icon: '💎', label: 'Leyenda' };
+  if (count >= 10) return { icon: '🥇', label: 'Influencer' };
+  if (count >= 5) return { icon: '🥈', label: 'Embajador' };
+  if (count >= 1) return { icon: '🥉', label: 'Reclutador' };
+  return null;
+};
 
 export default function Estadisticas({ albumActivo, perfil }) {
   const [tab, setTab] = useState('ranking'); 
+  const [rankingMode, setRankingMode] = useState('coleccion'); // 'coleccion' o 'referidos'
   const [mercadoData, setMercadoData] = useState([]);
   const [loading, setLoading] = useState(false);
   
@@ -62,6 +74,13 @@ export default function Estadisticas({ albumActivo, perfil }) {
     return { tCount, rCount, pct: Math.round((tCount / albumInfo.totalStickers) * 100) || 0, rank: myRank };
   }, [ranking, perfil, albumInfo]);
 
+  const rankingReferidos = useMemo(() => {
+    return mercadoData
+      .filter(u => (u.referralsCount || 0) > 0)
+      .sort((a, b) => (b.referralsCount || 0) - (a.referralsCount || 0))
+      .slice(0, 10);
+  }, [mercadoData]);
+
   const calcularCotizacion = () => {
     if (!selCotizador || !numCotizador) return toast.error("Selecciona equipo y cromo.");
     const codigo = `${selCotizador}_${(parseInt(numCotizador) - 1).toString().padStart(2, '0')}`;
@@ -76,20 +95,28 @@ export default function Estadisticas({ albumActivo, perfil }) {
     });
 
     setStatsCotizador({ loBuscan, loTienenRepetido, total: mercadoData.length });
+
+    // Sumar 1 al historial de uso del cotizador en su perfil (para los logros)
+    if (perfil?.id && !perfil.id.startsWith('invitado_')) {
+      updateDoc(doc(db, 'usuarios', perfil.id), { cotizadorUsos: increment(1) }).catch(() => {});
+    }
   };
 
   const logros = useMemo(() => {
     if (!miPosicion) return [];
     const { tCount, pct, rCount } = miPosicion;
     return [
-      { id: 'inicio', nombre: 'Primeros Pasos', desc: 'Consigue tu primer cromo.', unl: tCount > 0, color: '#3B82F6' },
-      { id: 'bronce', nombre: 'Coleccionista', desc: 'Alcanza el 25% del álbum.', unl: pct >= 25, color: '#D97706' },
-      { id: 'plata', nombre: 'Avanzado', desc: 'Alcanza el 50% del álbum.', unl: pct >= 50, color: '#94A3B8' },
-      { id: 'oro', nombre: 'Experto', desc: 'Alcanza el 75% del álbum.', unl: pct >= 75, color: '#EAB308' },
-      { id: 'diamante', nombre: 'Leyenda', desc: 'Completa el álbum al 100%.', unl: pct >= 100, color: '#06B6D4' },
-      { id: 'repes', nombre: 'Comerciante', desc: 'Acumula más de 50 cromos repetidos.', unl: rCount >= 50, color: '#10B981' }
+      { id: 'inicio', nombre: 'Primeros Pasos', desc: 'Consigue tu primer cromo.', unl: tCount > 0, color: '#3B82F6', emoji: '🌱' },
+      { id: 'bronce', nombre: 'Coleccionista', desc: 'Alcanza el 25% del álbum.', unl: pct >= 25, color: '#D97706', emoji: '🥉' },
+      { id: 'plata', nombre: 'Avanzado', desc: 'Alcanza el 50% del álbum.', unl: pct >= 50, color: '#94A3B8', emoji: '🥈' },
+      { id: 'oro', nombre: 'Experto', desc: 'Alcanza el 75% del álbum.', unl: pct >= 75, color: '#EAB308', emoji: '🥇' },
+      { id: 'diamante', nombre: 'Leyenda', desc: 'Completa el álbum al 100%.', unl: pct >= 100, color: '#06B6D4', emoji: '💎' },
+      { id: 'repes', nombre: 'Comerciante', desc: 'Acumula más de 50 cromos repetidos.', unl: rCount >= 50, color: '#10B981', emoji: '🤝' },
+      { id: 'investigador', nombre: 'Analista', desc: 'Usa el cotizador de mercado.', unl: (perfil?.cotizadorUsos || 0) > 0, color: '#8B5CF6', emoji: '🔍' },
+      { id: 'sociable', nombre: 'Sociable', desc: 'Añade o haz match con 5 personas.', unl: (perfil?.amigosCount || 0) >= 5, color: '#EC4899', emoji: '👥' },
+      { id: 'reclutador', nombre: 'Embajador', desc: 'Invita a tu primer amigo a la app.', unl: (perfil?.referralsCount || 0) >= 1, color: '#F43F5E', emoji: '📢' }
     ];
-  }, [miPosicion]);
+  }, [miPosicion, perfil]);
 
   const getDificultad = () => {
     if (!statsCotizador) return null;
@@ -115,10 +142,14 @@ export default function Estadisticas({ albumActivo, perfil }) {
       {tab === 'ranking' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div className="card">
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Ranking Global (Top 50)</h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 0, marginTop: 0 }}>Compite con la comunidad para ver quién completa el álbum {albumInfo.nombre} primero.</p>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Ranking Global</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px', marginTop: 0 }}>Compite con la comunidad para ver quién completa el álbum o quién invita a más amigos.</p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => setRankingMode('coleccion')} className="btn-secondary" style={{ flex: 1, padding: '6px', fontSize: '13px', background: rankingMode === 'coleccion' ? 'var(--bg-input)' : '', color: rankingMode === 'coleccion' ? 'var(--accent-primary)' : '', borderColor: rankingMode === 'coleccion' ? 'var(--accent-primary)' : '' }}>Top Álbum</button>
+              <button onClick={() => setRankingMode('referidos')} className="btn-secondary" style={{ flex: 1, padding: '6px', fontSize: '13px', background: rankingMode === 'referidos' ? 'var(--bg-input)' : '', color: rankingMode === 'referidos' ? 'var(--accent-primary)' : '', borderColor: rankingMode === 'referidos' ? 'var(--accent-primary)' : '' }}>Top Embajadores</button>
+            </div>
           </div>
-          {miPosicion && miPosicion.rank > 0 && (
+          {rankingMode === 'coleccion' && miPosicion && miPosicion.rank > 0 && (
             <div className="card" style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--accent-primary)' }}>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 'bold' }}>TU POSICIÓN</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -128,6 +159,23 @@ export default function Estadisticas({ albumActivo, perfil }) {
                 </div>
                 <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{miPosicion.pct}%</span>
               </div>
+            </div>
+          )}
+          {rankingMode === 'referidos' && (
+            <div className="card" style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--accent-primary)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
+                <span>TUS INVITADOS</span>
+                <span style={{ color: 'var(--accent-primary)' }}>{perfil?.referralsCount || 0} referidos</span>
+              </div>
+              {perfil?.referredUsers && perfil.referredUsers.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {perfil.referredUsers.map((u, i) => (
+                    <span key={i} style={{ fontSize: '12px', background: 'var(--bg-card)', padding: '4px 8px', borderRadius: '8px', border: '1px solid var(--border-primary)', color: 'var(--text-primary)', fontWeight: 'bold' }}>@{u.nickname}</span>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{perfil?.referralsCount > 0 ? "Tus referidos anteriores cuentan para tus medallas, pero no aparecen en esta lista reciente." : "Aún no has invitado a nadie. ¡Comparte tu enlace para ganar medallas!"}</div>
+              )}
             </div>
           )}
           {loading ? (
@@ -146,7 +194,7 @@ export default function Estadisticas({ albumActivo, perfil }) {
                 </div>
               ))}
             </div>
-          ) : ranking.length === 0 ? (
+          ) : rankingMode === 'coleccion' ? ( ranking.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay datos suficientes en el mercado.</div>
           ) : (
             <div className="card" style={{ padding: '0' }}>
@@ -168,7 +216,32 @@ export default function Estadisticas({ albumActivo, perfil }) {
                 </div>
               ))}
             </div>
-          )}
+          )) : ( rankingReferidos.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>Aún no hay embajadores con referidos.</div>
+          ) : (
+            <div className="card" style={{ padding: '0' }}>
+              {rankingReferidos.map((u, index) => {
+                const medalla = getMedalla(u.referralsCount);
+                return (
+                  <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: index < rankingReferidos.length - 1 ? '1px solid var(--border-primary)' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontWeight: 'bold', color: index < 3 ? '#F59E0B' : 'var(--text-secondary)', width: '24px' }}>#{index + 1}</span>
+                      {u.photoURL ? (
+                        <img src={u.photoURL} alt="" loading="lazy" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--bg-input)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>{u.nickname.charAt(0).toUpperCase()}</div>
+                      )}
+                      <span style={{ fontWeight: 'bold', fontSize: '14px', color: u.id === perfil?.id ? 'var(--accent-primary)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>@{u.nickname}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {medalla && <span title={medalla.label} style={{ fontSize: '16px' }}>{medalla.icon}</span>}
+                      <span style={{ fontWeight: 'bold', fontSize: '13px', background: 'var(--bg-input)', padding: '4px 8px', borderRadius: '8px', color: 'var(--accent-primary)' }}>{u.referralsCount} ref.</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
 
@@ -180,12 +253,12 @@ export default function Estadisticas({ albumActivo, perfil }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {logros.map(logro => (
-              <div key={logro.id} className="card" style={{ margin: 0, opacity: logro.unl ? 1 : 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '16px 12px' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={logro.unl ? logro.color : 'var(--text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '8px' }}>
+              <div key={logro.id} onClick={() => logro.unl && generarImagenLogro(perfil.nickname, logro)} title={logro.unl ? "Toca para compartir tu medalla" : "Logro bloqueado"} className="card" style={{ margin: 0, filter: logro.unl ? 'none' : 'grayscale(100%) opacity(0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '16px 12px', border: logro.unl ? `1px solid ${logro.color}` : '1px solid var(--border-primary)', boxShadow: logro.unl ? `0 4px 15px ${logro.color}33` : 'none', transition: 'all 0.3s ease', cursor: logro.unl ? 'pointer' : 'default' }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={logro.unl ? logro.color : 'var(--text-secondary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '10px', filter: logro.unl ? `drop-shadow(0 0 8px ${logro.color}66)` : 'none' }}>
                   <circle cx="12" cy="8" r="7"></circle>
                   <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                 </svg>
-                <span style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '4px', color: 'var(--text-primary)' }}>{logro.nombre}</span>
+                <span style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '4px', color: logro.unl ? logro.color : 'var(--text-primary)' }}>{logro.nombre}</span>
                 <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.3 }}>{logro.desc}</span>
               </div>
             ))}

@@ -6,7 +6,7 @@ import LoginScreen from './LoginScreen';
 import Header from './Header';
 import Footer from './Footer';
 import { db, auth } from './firebase';
-import { doc, getDoc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, deleteDoc, updateDoc, increment, arrayUnion } from 'firebase/firestore';
 import { signOut, onAuthStateChanged, deleteUser } from 'firebase/auth';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -131,6 +131,21 @@ export default function App() {
                           const colName = albumActivo === 'mundial_2026' ? 'solicitudes' : `solicitudes_${albumActivo}`;
                           const solRef = doc(db, colName, `${perfil.id}_${refId}`);
                           await setDoc(solRef, { from: perfil.id, fromNickname: perfil.nickname, fromPhotoURL: perfil.photoURL || null, to: refId, toNickname: userData.nickname, toPhotoURL: userData.photoURL || null, status: 'pending', timestamp: Date.now() });
+                          
+                          // Incrementar el contador de referidos del usuario que invitó
+                          const refUserDoc = doc(db, 'usuarios', refId);
+                          await updateDoc(refUserDoc, { 
+                            referralsCount: increment(1),
+                            referredUsers: arrayUnion({ id: perfil.id, nickname: perfil.nickname })
+                          }).catch(() => {});
+                          
+                          // Si el usuario ya está publicado en el mercado, le actualizamos su medalla allí también
+                          const mercadoColName = albumActivo === 'mundial_2026' ? 'mercado' : `mercado_${albumActivo}`;
+                          const mercadoRefDoc = doc(db, mercadoColName, refId);
+                          getDoc(mercadoRefDoc).then(snap => {
+                            if (snap.exists()) updateDoc(mercadoRefDoc, { referralsCount: increment(1) }).catch(() => {});
+                          });
+                          
                           toast.success(`Solicitud enviada a @${userData.nickname}`);
                         } catch(e) {
                           toast.error("Error al enviar solicitud.");
@@ -224,6 +239,7 @@ export default function App() {
         if (!perfilLocal || perfilLocal.id !== user.uid) {
           const userRef = doc(db, "usuarios", user.uid);
           const docSnap = await getDoc(userRef);
+          const authCreationTime = user.metadata?.creationTime ? new Date(user.metadata.creationTime).getTime() : Date.now();
           
           const guestTransferStr = localStorage.getItem('panini_guest_transfer');
           let guestStickers = null;
@@ -234,6 +250,10 @@ export default function App() {
 
           if (docSnap.exists()) {
             const data = docSnap.data();
+            if (!data.createdAt) {
+              data.createdAt = authCreationTime;
+              await setDoc(userRef, { createdAt: authCreationTime }, { merge: true });
+            }
             if (guestStickers && Object.keys(guestStickers).length > 0) {
               const merged = { ...data.stickers };
               let modified = false;
@@ -249,7 +269,7 @@ export default function App() {
             setPerfil(data);
           } else {
             // Si viene de una redirección en iOS y es su primera vez, creamos el perfil aquí
-            const nuevoPerfil = { id: user.uid, email: user.email, nickname: user.displayName || 'Invitado', photoURL: user.photoURL || null, stickers: guestStickers || {} };
+            const nuevoPerfil = { id: user.uid, email: user.email, nickname: user.displayName || 'Invitado', photoURL: user.photoURL || null, stickers: guestStickers || {}, createdAt: authCreationTime };
             await setDoc(userRef, nuevoPerfil);
             setPerfil(nuevoPerfil);
             if (guestStickers && Object.keys(guestStickers).length > 0) {
@@ -378,29 +398,28 @@ export default function App() {
     toast.success("Tema automático (sistema) activado");
   };
 
-  const cambiarApodo = async (nuevoApodo) => {
-    if (!nuevoApodo || nuevoApodo.trim() === '' || nuevoApodo === perfil.nickname) return;
-    const apodoLimpio = nuevoApodo.trim();
-    const nuevoPerfil = { ...perfil, nickname: apodoLimpio };
+  const actualizarPerfil = async (datos) => {
+    const nuevoPerfil = { ...perfil, ...datos };
     setPerfil(nuevoPerfil);
 
     if (perfil.id.startsWith('invitado_')) {
-      toast.success("Apodo actualizado localmente.");
+      toast.success("Perfil actualizado localmente.");
       return;
     }
 
     try {
       await setDoc(doc(db, "usuarios", perfil.id), nuevoPerfil);
       // Actualizamos también el mercado si el usuario estaba publicado
-      const mercadoRef = doc(db, 'mercado', perfil.id);
+      const colMercado = albumActivo === 'mundial_2026' ? 'mercado' : `mercado_${albumActivo}`;
+      const mercadoRef = doc(db, colMercado, perfil.id);
       const mercadoSnap = await getDoc(mercadoRef);
       if (mercadoSnap.exists()) {
-        await setDoc(mercadoRef, { nickname: apodoLimpio }, { merge: true });
+        await setDoc(mercadoRef, datos, { merge: true });
       }
-      toast.success("Apodo actualizado correctamente.");
+      toast.success("Perfil actualizado correctamente.");
     } catch (e) {
       console.error(e);
-      toast.error("Error al actualizar el apodo.");
+      toast.error("Error al actualizar el perfil.");
     }
   };
 
@@ -520,6 +539,7 @@ export default function App() {
 
     try {
       const docSnap = await getDoc(userRef);
+      const authCreationTime = user.metadata?.creationTime ? new Date(user.metadata.creationTime).getTime() : Date.now();
 
       const guestTransferStr = localStorage.getItem('panini_guest_transfer');
       let guestStickers = null;
@@ -530,6 +550,10 @@ export default function App() {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+        if (!data.createdAt) {
+          data.createdAt = authCreationTime;
+          await setDoc(userRef, { createdAt: authCreationTime }, { merge: true });
+        }
         if (guestStickers && Object.keys(guestStickers).length > 0) {
           const merged = { ...data.stickers };
           let modified = false;
@@ -545,7 +569,7 @@ export default function App() {
         setPerfil(data); // ☁️ Carga los datos existentes de la nube
       } else {
         // 🆕 Crea un perfil nuevo en la base de datos si es su primera vez
-        const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', photoURL: user.photoURL || null, stickers: guestStickers || {} };
+        const nuevoPerfil = { id: userId, email: user.email, nickname: user.displayName || user.nickname || 'Invitado', photoURL: user.photoURL || null, stickers: guestStickers || {}, createdAt: authCreationTime };
         await setDoc(userRef, nuevoPerfil);
         setPerfil(nuevoPerfil);
         if (guestStickers && Object.keys(guestStickers).length > 0) {
@@ -714,14 +738,51 @@ export default function App() {
     return { tienesCount: tCount, repetidasCount: rCount, faltanCount: fCount, pctGlobal: pct };
   }, [perfil?.stickers, albumActivo]);
 
+  // Calculamos la cantidad de logros (medallas) desbloqueados actualmente
+  const unlockedMedalsCount = useMemo(() => {
+    let count = 0;
+    if (tienesCount > 0) count++;
+    if (pctGlobal >= 25) count++;
+    if (pctGlobal >= 50) count++;
+    if (pctGlobal >= 75) count++;
+    if (pctGlobal >= 100) count++;
+    if (repetidasCount >= 50) count++;
+    if ((perfil?.cotizadorUsos || 0) > 0) count++;
+    if ((perfil?.amigosCount || 0) >= 5) count++;
+    if ((perfil?.referralsCount || 0) >= 1) count++;
+    return count;
+  }, [tienesCount, pctGlobal, repetidasCount, perfil?.cotizadorUsos, perfil?.amigosCount, perfil?.referralsCount]);
+
+  const prevMedalsRef = useRef(undefined);
+  const prevReferralsRef = useRef(undefined);
+
   useEffect(() => {
-    if (pctGlobal === 100) {
+    // Si es la carga inicial, guardamos los valores base sin lanzar animación
+    if (prevMedalsRef.current === undefined || prevReferralsRef.current === undefined) {
+      prevMedalsRef.current = unlockedMedalsCount;
+      prevReferralsRef.current = perfil?.referralsCount || 0;
+      return;
+    }
+
+    const currentReferrals = perfil?.referralsCount || 0;
+
+    // Si alguno de los valores ha subido, lanzamos el confeti y el toast
+    if (unlockedMedalsCount > prevMedalsRef.current || currentReferrals > prevReferralsRef.current) {
+      if (unlockedMedalsCount > prevMedalsRef.current) toast.success('¡Has desbloqueado un nuevo logro!', { icon: '🏅', duration: 5000 });
+      if (currentReferrals > prevReferralsRef.current) toast.success('¡Felicidades! Has conseguido un nuevo referido.', { icon: '🎉', duration: 5000 });
+      
       setShowConfetti(true);
-      // Detenemos el confeti después de 10 segundos para ahorrar recursos
-      const timer = setTimeout(() => setShowConfetti(false), 10000);
+      const timer = setTimeout(() => setShowConfetti(false), 8000);
+      
+      prevMedalsRef.current = unlockedMedalsCount;
+      prevReferralsRef.current = currentReferrals;
       return () => clearTimeout(timer);
     }
-  }, [pctGlobal]);
+    
+    // Actualizamos el historial (incluso si bajaron porque el usuario deshizo un cambio)
+    prevMedalsRef.current = unlockedMedalsCount;
+    prevReferralsRef.current = currentReferrals;
+  }, [unlockedMedalsCount, perfil?.referralsCount]);
 
 
   if (isInitializing) {
@@ -756,7 +817,7 @@ export default function App() {
           Estás Offline
         </div>
       )}
-      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} cambiarApodo={cambiarApodo} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} />
+      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} actualizarPerfil={actualizarPerfil} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} />
 
       <div className="content-wrapper" style={{ marginTop: '16px' }}>
         <div className="card stats-card-modern">

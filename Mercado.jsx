@@ -25,6 +25,41 @@ const REGIONES_ESPANA = {
   "País Vasco": ["Bilbao", "Vitoria-Gasteiz", "San Sebastián", "Barakaldo"]
 };
 
+// Sistema de medallas según referidos
+const getMedalla = (count) => {
+  if (!count) return null;
+  if (count >= 25) return { icon: '💎', label: 'Leyenda' };
+  if (count >= 10) return { icon: '🥇', label: 'Influencer' };
+  if (count >= 5) return { icon: '🥈', label: 'Embajador' };
+  if (count >= 1) return { icon: '🥉', label: 'Reclutador' };
+  return null;
+};
+
+// Helper para evaluar y obtener la lista de logros del usuario en el Mercado
+const getLogrosUsuario = (user, albumInfo) => {
+  let tCount = 0;
+  let rCount = 0;
+  for (const cod in user.stickers) {
+    if (!cod.startsWith('EXT26_')) {
+      if (user.stickers[cod] >= 1) tCount++;
+      if (user.stickers[cod] >= 2) rCount += (user.stickers[cod] - 1);
+    }
+  }
+  const pct = Math.round((tCount / albumInfo.totalStickers) * 100) || 0;
+  
+  const medals = [];
+  if (tCount > 0) medals.push({ emoji: '🌱', label: 'Primeros Pasos' });
+  if (pct >= 25) medals.push({ emoji: '🥉', label: 'Coleccionista' });
+  if (pct >= 50) medals.push({ emoji: '🥈', label: 'Avanzado' });
+  if (pct >= 75) medals.push({ emoji: '🥇', label: 'Experto' });
+  if (pct >= 100) medals.push({ emoji: '💎', label: 'Leyenda' });
+  if (rCount >= 50) medals.push({ emoji: '🤝', label: 'Comerciante' });
+  if ((user.cotizadorUsos || 0) > 0) medals.push({ emoji: '🔍', label: 'Analista' });
+  if ((user.amigosCount || 0) >= 5) medals.push({ emoji: '👥', label: 'Sociable' });
+  if ((user.referralsCount || 0) >= 1) medals.push({ emoji: '📢', label: 'Embajador' });
+  return medals;
+};
+
 export default function Mercado({ perfil, albumActivo, onLogout }) {
   const navigate = useNavigate();
   const [usuariosMercado, setUsuariosMercado] = useState([]);
@@ -103,7 +138,12 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
         await setDoc(doc(db, getCol('mercado'), perfil.id), {
           nickname: perfil.nickname,
           stickers: perfil.stickers,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          referralsCount: perfil.referralsCount || 0,
+          cotizadorUsos: perfil.cotizadorUsos || 0,
+          amigosCount: perfil.amigosCount || 0,
+          estadoTexto: perfil.estadoTexto || '',
+          createdAt: perfil.createdAt || Date.now()
         });
         setPublicado(true);
         toast.success("¡Tu lista ha sido publicada en el mercado!");
@@ -142,7 +182,20 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
 
         // Solo mostrar usuarios con los que tenemos AL MENOS 1 cromo de intercambio útil
         if (leDoy > 0 || meDa > 0) {
-          matches.push({ id: document.id, nickname: data.nickname, photoURL: data.photoURL, leDoy, meDa, total: leDoy + meDa, stickers: data.stickers });
+          matches.push({ 
+            id: document.id, 
+            nickname: data.nickname, 
+            photoURL: data.photoURL, 
+            leDoy, 
+            meDa, 
+            total: leDoy + meDa, 
+            stickers: data.stickers,
+            referralsCount: data.referralsCount || 0,
+            cotizadorUsos: data.cotizadorUsos || 0,
+            amigosCount: data.amigosCount || 0,
+            estadoTexto: data.estadoTexto || '',
+            createdAt: data.createdAt || Date.now()
+          });
         }
       });
 
@@ -232,6 +285,7 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
         const { rawFaltantes, rawRepetidos } = generarRawListas(dataMercado.stickers);
         miLista.unshift({ id: solicitud.from, nickname: solicitud.fromNickname, photoURL: solicitud.fromPhotoURL || dataMercado.photoURL || null, stickers: dataMercado.stickers, rawFaltantes, rawRepetidos });
         await setDoc(misAmigosRef, { lista: miLista });
+        await updateDoc(doc(db, 'usuarios', perfil.id), { amigosCount: miLista.length }).catch(()=>{});
       }
 
       // 3. Añadirme automáticamente a su lista de amigos
@@ -243,6 +297,7 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
         const { rawFaltantes, rawRepetidos } = generarRawListas(perfil.stickers);
         suLista.unshift({ id: perfil.id, nickname: perfil.nickname, photoURL: perfil.photoURL || null, stickers: perfil.stickers, rawFaltantes, rawRepetidos });
         await setDoc(susAmigosRef, { lista: suLista });
+        await updateDoc(doc(db, 'usuarios', solicitud.from), { amigosCount: suLista.length }).catch(()=>{});
       }
 
       // 4. Notificar a la otra persona del éxito
@@ -396,8 +451,34 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{user.nickname.charAt(0).toUpperCase()}</div>
                       )}
                       <div>
-                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)' }}>@{user.nickname}</div>
+                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
+                          @{user.nickname}
+                          {user.createdAt && (Date.now() - user.createdAt > 30 * 24 * 60 * 60 * 1000) && (
+                            <svg title="Usuario Verificado (Cuenta con más de 1 mes)" width="16" height="16" viewBox="0 0 24 24" fill="#3B82F6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px', cursor: 'help' }}><circle cx="12" cy="12" r="10"></circle><path d="M9 12l2 2 4-4"></path></svg>
+                          )}
+                          {getMedalla(user.referralsCount) && (
+                            <span title={`${getMedalla(user.referralsCount).label} (${user.referralsCount} referidos)`} style={{ fontSize: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-primary)', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', cursor: 'help' }}>
+                              {getMedalla(user.referralsCount).icon}
+                            </span>
+                          )}
+                        </div>
                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Me da: <span style={{ color: '#D97706', fontWeight: 'bold' }}>{user.meDa}</span> | Le doy: <span style={{ color: '#059669', fontWeight: 'bold' }}>{user.leDoy}</span></div>
+                        {user.estadoTexto && (
+                          <div style={{ fontSize: '12px', fontStyle: 'italic', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                            "{user.estadoTexto}"
+                          </div>
+                        )}
+                        {(() => {
+                          const userLogros = getLogrosUsuario(user, ALBUMS[albumActivo]);
+                          if (userLogros.length === 0) return null;
+                          return (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                              {userLogros.map((l, idx) => (
+                                <span key={idx} title={l.label} style={{ fontSize: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-primary)', borderRadius: '4px', padding: '2px 4px', cursor: 'help' }}>{l.emoji}</span>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                     <button onClick={() => enviarSolicitud(user)} className="btn-primary" style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '10px' }}>Solicitar</button>

@@ -3,11 +3,13 @@ import './App.css';
 import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, resetTheme, cambiarApodo, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable }) {
+export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, resetTheme, actualizarPerfil, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editForm, setEditForm] = useState({ nickname: '', estadoTexto: '' });
 
   const handleLogoClick = () => {
     setShowAlbumDropdown(!showAlbumDropdown);
@@ -38,9 +40,9 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
     }
   };
 
-  const handleEditNickname = () => {
-    const nuevoApodo = window.prompt("Introduce tu nuevo apodo para el juego (ej: Alberto48):", perfil.nickname);
-    if (nuevoApodo) cambiarApodo(nuevoApodo);
+  const openEditProfile = () => {
+    setEditForm({ nickname: perfil.nickname || '', estadoTexto: perfil.estadoTexto || '' });
+    setShowEditProfile(true);
     setShowDropdown(false);
   };
 
@@ -107,8 +109,8 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 </div>
               </div>
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '0 0 4px 0' }}></div>
-              <button onClick={handleEditNickname} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
-                Editar apodo
+              <button onClick={openEditProfile} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
+                Editar perfil
               </button>
               <label style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%', display: 'block', margin: 0 }}>
                 Cambiar foto
@@ -162,6 +164,33 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
               </button>
               <button onClick={() => setShowShareModal(false)} className="btn-secondary" style={{ width: '100%' }}>Cerrar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showEditProfile && (
+        <div className="modal-overlay" onClick={() => setShowEditProfile(false)}>
+          <div className="card modal-content" style={{ margin: 0, padding: '24px' }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0, color: 'var(--accent-primary)', fontSize: '20px' }}>Editar Perfil</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!editForm.nickname.trim()) return toast.error("El apodo no puede estar vacío");
+              actualizarPerfil({ nickname: editForm.nickname.trim(), estadoTexto: editForm.estadoTexto.trim() });
+              setShowEditProfile(false);
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Apodo</label>
+                <input type="text" value={editForm.nickname} onChange={e => setEditForm({...editForm, nickname: e.target.value})} className="input-field" style={{ padding: '10px 14px', marginTop: '4px' }} maxLength={20} required />
+              </div>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Estado corto (Mercado)</label>
+                <input type="text" value={editForm.estadoTexto} onChange={e => setEditForm({...editForm, estadoTexto: e.target.value})} className="input-field" placeholder="Ej: Sólo cambio en Madrid..." style={{ padding: '10px 14px', marginTop: '4px' }} maxLength={40} />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                <button type="button" onClick={() => setShowEditProfile(false)} className="btn-secondary" style={{ flex: 1 }}>Cancelar</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Guardar</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

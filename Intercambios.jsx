@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { parsearTextoAStickers, ALBUMS } from './utils';
 import AmigoCard from './AmigoCard';
 import { db } from './firebase';
-import { doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, addDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, addDoc, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 export default function Intercambios({ perfil, albumActivo, onLogout }) {
@@ -131,8 +131,22 @@ export default function Intercambios({ perfil, albumActivo, onLogout }) {
     } catch (error) { console.error("Error al guardar amigos:", error); }
   }, [comunidadUsuarios, datosCargados, localKey]);
 
+  useEffect(() => {
+    // Si se añade o elimina un amigo, actualizamos el contador en el perfil para los Logros
+    if (datosCargados && perfil?.id && !perfil.id.startsWith('invitado_')) {
+      if (perfil.amigosCount !== comunidadUsuarios.length) {
+        updateDoc(doc(db, 'usuarios', perfil.id), { amigosCount: comunidadUsuarios.length }).catch(() => {});
+      }
+    }
+  }, [comunidadUsuarios.length, datosCargados, perfil?.id, perfil?.amigosCount]);
+
   const guardarEnNube = (nuevaLista) => {
-    if (perfil?.id) setDoc(doc(db, getCol("amigos"), perfil.id), { lista: nuevaLista }).catch(e => console.error(e));
+    if (perfil?.id) {
+      setDoc(doc(db, getCol("amigos"), perfil.id), { lista: nuevaLista }).catch(e => console.error(e));
+      if (!perfil.id.startsWith('invitado_')) {
+        updateDoc(doc(db, 'usuarios', perfil.id), { amigosCount: nuevaLista.length }).catch(() => {});
+      }
+    }
   };
 
   const añadirAmigoNuevo = (e) => {
