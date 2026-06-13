@@ -282,7 +282,9 @@ export default function Estadisticas({ albumActivo, perfil }) {
                 <option value="">Selecciona el cromo...</option>
                 {Array.from({ length: selInfo?.total || 0 }).map((_, i) => {
                   let tag = i === 0 ? 'Escudo' : `Cromo ${i + 1}`;
-                  if (albumInfo.isSequential) {
+                  if (selInfo?.id === 'FWC') {
+                    tag = `FWC${i.toString().padStart(2, '0')}`;
+                  } else if (albumInfo.isSequential) {
                     let currentSeq = 1;
                     for (let s of albumInfo.selecciones) {
                       if (s.id === selInfo.id) break;

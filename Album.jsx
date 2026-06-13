@@ -277,6 +277,7 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
                       {stickersData.map(s => {
                         let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
                         let txt = isSequential ? (sel.startIndex + s.numeroVisual - 1).toString() : (s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`);
+                        if (sel.id === 'FWC') txt = `FWC${(s.numeroVisual - 1).toString().padStart(2, '0')}`;
                         if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
                         const esDificil = dificiles.has(s.codigo);
 
