@@ -22,7 +22,7 @@ export default function CookieBanner() {
 
     const script = document.createElement('script');
     script.id = 'google-adsense-script';
-    script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"; // Reemplaza con tu ID real
+    script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6350264370547424";
     script.async = true;
     script.crossOrigin = "anonymous";
     
