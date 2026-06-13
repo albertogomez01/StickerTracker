@@ -51,9 +51,9 @@ export default function CookieBanner() {
       <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
         Utilizamos cookies propias para el funcionamiento de la app y de terceros (Google AdSense) para financiar los servidores mediante anuncios. Al aceptar, permites la personalización de publicidad según tus intereses. Puedes consultar los detalles en nuestra <a href="/privacidad" style={{ color: 'var(--accent-primary)', fontWeight: 'bold', textDecoration: 'none' }}>Política de Privacidad</a> y <a href="/terminos" style={{ color: 'var(--accent-primary)', fontWeight: 'bold', textDecoration: 'none' }}>Términos de Servicio</a>.
       </p>
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        <button onClick={handleDecline} className="btn-secondary" style={{ flex: '1 1 45%', fontSize: '13px', padding: '10px' }}>Rechazar</button>
-        <button onClick={handleAccept} className="btn-secondary" style={{ flex: '1 1 45%', fontSize: '13px', padding: '10px' }}>Aceptar y Continuar</button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <button onClick={handleAccept} className="btn-secondary" style={{ width: '100%', fontSize: '14px', padding: '12px' }}>Aceptar y Continuar</button>
+        <button onClick={handleDecline} className="btn-secondary" style={{ width: '100%', fontSize: '14px', padding: '12px' }}>Rechazar</button>
       </div>
     </div>
   );
