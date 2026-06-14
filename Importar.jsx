@@ -39,8 +39,8 @@ export default function Importar({ procesarImportadorTexto, perfil, albumActivo 
           if (v === 0) fSel.push(i + 1);
           else if (v >= 2) rSel.push(v > 2 ? `${i + 1}x${v - 1}` : `${i + 1}`);
         }
-        if (fSel.length > 0) faltantes.push(`${sel.id}: ${fSel.join(', ')}`);
-        if (rSel.length > 0) repetidos.push(`${sel.id}: ${rSel.join(', ')}`);
+        if (fSel.length > 0) faltantes.push(`${sel.alias || sel.id}: ${fSel.join(', ')}`);
+        if (rSel.length > 0) repetidos.push(`${sel.alias || sel.id}: ${rSel.join(', ')}`);
       });
     }
 

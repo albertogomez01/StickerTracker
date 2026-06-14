@@ -108,13 +108,14 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
   };
 
   const renderDigitalFlag = (sel) => {
-    if (sel.id === 'FWC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Copa</span>;
-    if (sel.id === 'CC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>CC</span>;
-    if (sel.id === 'EXT26') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🌟</span>;
-    if (sel.id === 'INT') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🏁</span>;
-    if (sel.id === 'EST') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🏟️</span>;
-    if (sel.id === 'LEY') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⭐</span>;
-    if (sel.id === 'EXT') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>➕</span>;
+    const id = sel.alias || sel.id;
+    if (id === 'FWC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Copa</span>;
+    if (id === 'CC') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>CC</span>;
+    if (id === 'EXT26') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🌟</span>;
+    if (id === 'INT') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🏁</span>;
+    if (id === 'EST') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>🏟️</span>;
+    if (id === 'LEY') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⭐</span>;
+    if (id === 'EXT') return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>➕</span>;
     if (sel.flagCode) return <img src={`https://flagcdn.com/w40/${sel.flagCode}.png`} alt="" loading="lazy" style={{ width: '22px', height: '14px', borderRadius: '3px', objectFit: 'cover' }} />;
     return <span style={{ fontSize: '14px', fontWeight: 'bold' }}>⚽</span>;
   };
@@ -135,7 +136,7 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
     return seleccionesConIndices.filter(sel => {
       if (busquedaAlbum.trim() !== '') {
         const termino = busquedaAlbum.toLowerCase();
-        let matches = sel.nombre.toLowerCase().includes(termino) || sel.id.toLowerCase().includes(termino);
+        let matches = sel.nombre.toLowerCase().includes(termino) || (sel.alias || sel.id).toLowerCase().includes(termino);
         if (!matches && isSequential) {
           const numBusqueda = parseInt(termino, 10);
           if (!isNaN(numBusqueda) && numBusqueda >= sel.startIndex && numBusqueda < sel.startIndex + sel.total) {
@@ -190,7 +191,7 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
                 {renderDigitalFlag(sel)}
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                    <span><span style={{ fontWeight: '700', fontSize: '13px', width: '40px', display: 'inline-block' }}>{sel.id}</span> <span style={{ fontSize: '13px' }}>{sel.nombre}</span></span>
+                    <span><span style={{ fontWeight: '700', fontSize: '13px', width: '40px', display: 'inline-block' }}>{sel.alias || sel.id}</span> <span style={{ fontSize: '13px' }}>{sel.nombre}</span></span>
                     <span style={{ color: '#94A3B8', fontSize: '11px' }}>{tEnFila}/{sel.total} ({pctSel}%)</span>
                   </div>
                   <div style={{ width: '100%', height: '4px', background: '#E2E8F0', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
@@ -276,7 +277,7 @@ export default function Album({ perfil, alternarCromoManual, marcarEquipoComplet
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
                       {stickersData.map(s => {
                         let bg = s.estado === 1 ? '#10B981' : s.estado >= 2 ? '#F59E0B' : '#EF4444';
-                        let txt = isSequential ? (sel.startIndex + s.numeroVisual - 1).toString() : (s.numeroVisual === 1 ? 'Escudo' : `${sel.id} ${s.numeroVisual}`);
+                        let txt = isSequential ? (sel.startIndex + s.numeroVisual - 1).toString() : (s.numeroVisual === 1 ? 'Escudo' : `${sel.alias || sel.id} ${s.numeroVisual}`);
                         if (sel.id === 'FWC') txt = `FWC${(s.numeroVisual - 1).toString().padStart(2, '0')}`;
                         if (s.estado >= 2) txt += ` (x${s.estado - 1})`;
                         const esDificil = dificiles.has(s.codigo);

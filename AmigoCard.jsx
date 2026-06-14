@@ -60,7 +60,7 @@ export default function AmigoCard({ amigo, perfil, onGuardar, onEliminar, albumA
       const miEstado = perfil?.stickers?.[cod] || 0;
       const amigoEstado = amigo.stickers?.[cod] || 0;
       const absNum = currentSeq + i;
-      const tag = isSequential ? absNum.toString() : (i === 0 ? `${sel.id} Escudo` : `${sel.id} ${i + 1}`);
+      const tag = isSequential ? absNum.toString() : (i === 0 ? `${sel.alias || sel.id} Escudo` : `${sel.alias || sel.id} ${i + 1}`);
       if (miEstado >= 2 && amigoEstado === 0) candidatosLeDoy.push({ cod, tag });
       if (amigoEstado >= 2 && miEstado === 0) candidatosElMeDa.push({ cod, tag });
     }

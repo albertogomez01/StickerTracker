@@ -52,9 +52,13 @@ export default function Estadisticas({ albumActivo, perfil }) {
   const ranking = useMemo(() => {
     return mercadoData.map(u => {
       let tCount = 0;
-      for (const cod in u.stickers) {
-        if (u.stickers[cod] >= 1 && !cod.startsWith('EXT26_')) tCount++;
-      }
+      albumInfo.selecciones.forEach(sel => {
+        if (sel.id === 'EXT26') return;
+        for (let i = 0; i < sel.total; i++) {
+          const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+          if (u.stickers?.[cod] >= 1) tCount++;
+        }
+      });
       const pct = Math.round((tCount / albumInfo.totalStickers) * 100) || 0;
       return { ...u, pct, tCount };
     }).sort((a, b) => b.tCount - a.tCount).slice(0, 50);
@@ -64,12 +68,15 @@ export default function Estadisticas({ albumActivo, perfil }) {
     if (!perfil) return null;
     let tCount = 0;
     let rCount = 0;
-    for (const cod in perfil.stickers) {
-      if (!cod.startsWith('EXT26_')) {
-        if (perfil.stickers[cod] >= 1) tCount++;
-        if (perfil.stickers[cod] >= 2) rCount += (perfil.stickers[cod] - 1);
+    albumInfo.selecciones.forEach(sel => {
+      if (sel.id === 'EXT26') return;
+      for (let i = 0; i < sel.total; i++) {
+        const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+        const v = perfil.stickers?.[cod] || 0;
+        if (v >= 1) tCount++;
+        if (v >= 2) rCount += (v - 1);
       }
-    }
+    });
     const myRank = ranking.findIndex(u => u.id === perfil.id) + 1;
     return { tCount, rCount, pct: Math.round((tCount / albumInfo.totalStickers) * 100) || 0, rank: myRank };
   }, [ranking, perfil, albumInfo]);

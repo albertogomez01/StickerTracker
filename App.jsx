@@ -13,7 +13,8 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster, toast } from 'react-hot-toast';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Joyride, { STATUS } from 'react-joyride';
+import * as JoyrideModule from 'react-joyride';
+const Joyride = JoyrideModule.default || JoyrideModule.Joyride || JoyrideModule;
 
 const Album = lazy(() => import('./Album'));
 const Importar = lazy(() => import('./Importar'));
@@ -640,7 +641,7 @@ export default function App() {
 
   const handleJoyrideCallback = (data) => {
     const { status } = data;
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    if (['finished', 'skipped'].includes(status)) {
       setRunTour(false);
       localStorage.setItem('panini_tour_v1_seen', 'true');
     }

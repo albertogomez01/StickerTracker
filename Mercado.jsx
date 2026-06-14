@@ -39,12 +39,15 @@ const getMedalla = (count) => {
 const getLogrosUsuario = (user, albumInfo) => {
   let tCount = 0;
   let rCount = 0;
-  for (const cod in user.stickers) {
-    if (!cod.startsWith('EXT26_')) {
-      if (user.stickers[cod] >= 1) tCount++;
-      if (user.stickers[cod] >= 2) rCount += (user.stickers[cod] - 1);
+  albumInfo.selecciones.forEach(sel => {
+    if (sel.id === 'EXT26') return;
+    for (let i = 0; i < sel.total; i++) {
+      const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+      const v = user.stickers?.[cod] || 0;
+      if (v >= 1) tCount++;
+      if (v >= 2) rCount += (v - 1);
     }
-  }
+  });
   const pct = Math.round((tCount / albumInfo.totalStickers) * 100) || 0;
   
   const medals = [];
@@ -260,6 +263,8 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
       if (!isSequential) {
         if (fSel.length > 0) faltantes.push(`${sel.id}: ${fSel.join(', ')}`);
         if (rSel.length > 0) repetidos.push(`${sel.id}: ${rSel.join(', ')}`);
+        if (fSel.length > 0) faltantes.push(`${sel.alias || sel.id}: ${fSel.join(', ')}`);
+        if (rSel.length > 0) repetidos.push(`${sel.alias || sel.id}: ${rSel.join(', ')}`);
       }
       currentSeq += sel.total;
     });
