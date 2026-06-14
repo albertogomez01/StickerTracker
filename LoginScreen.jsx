@@ -50,15 +50,13 @@ export default function LoginScreen({ onLogin }) {
         throw new Error("Toca los 3 puntos arriba a la derecha y selecciona 'Abrir en navegador' (Chrome o Safari) para poder iniciar sesión.");
       }
 
-      // Detectar si es iOS o si la PWA está instalada
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
-      if (isIOS || isStandalone) {
-        // En iOS, Safari bloquea las ventanas emergentes. Usamos redirección segura.
+      if (isStandalone) {
+        // En PWA instalada, el popup saca de la app. Usamos redirección.
         await signInWithRedirect(auth, googleProvider);
       } else {
-        // En PC y Android, el Popup es más rápido y fluido
+        // En Safari y móviles, la redirección suele bloquearse por el Anti-Rastreo. Usamos Popup.
         try {
           const result = await signInWithPopup(auth, googleProvider);
           await onLogin(result.user);
