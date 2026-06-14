@@ -780,36 +780,37 @@ export default function App() {
     return count;
   }, [tienesCount, pctGlobal, repetidasCount, perfil?.cotizadorUsos, perfil?.amigosCount, perfil?.referralsCount]);
 
-  const prevMedalsRef = useRef(undefined);
+  const prevMedalsRef = useRef({});
   const prevReferralsRef = useRef(undefined);
 
   useEffect(() => {
     // Si es la carga inicial, guardamos los valores base sin lanzar animación
-    if (prevMedalsRef.current === undefined || prevReferralsRef.current === undefined) {
-      prevMedalsRef.current = unlockedMedalsCount;
+    if (prevMedalsRef.current[albumActivo] === undefined || prevReferralsRef.current === undefined) {
+      prevMedalsRef.current[albumActivo] = unlockedMedalsCount;
       prevReferralsRef.current = perfil?.referralsCount || 0;
       return;
     }
 
     const currentReferrals = perfil?.referralsCount || 0;
+    const prevMedalsForAlbum = prevMedalsRef.current[albumActivo];
 
     // Si alguno de los valores ha subido, lanzamos el confeti y el toast
-    if (unlockedMedalsCount > prevMedalsRef.current || currentReferrals > prevReferralsRef.current) {
-      if (unlockedMedalsCount > prevMedalsRef.current) toast.success('¡Has desbloqueado un nuevo logro!', { icon: '🏅', duration: 5000 });
+    if (unlockedMedalsCount > prevMedalsForAlbum || currentReferrals > prevReferralsRef.current) {
+      if (unlockedMedalsCount > prevMedalsForAlbum) toast.success('¡Has desbloqueado un nuevo logro!', { icon: '🏅', duration: 5000 });
       if (currentReferrals > prevReferralsRef.current) toast.success('¡Felicidades! Has conseguido un nuevo referido.', { icon: '🎉', duration: 5000 });
       
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 8000);
       
-      prevMedalsRef.current = unlockedMedalsCount;
+      prevMedalsRef.current[albumActivo] = unlockedMedalsCount;
       prevReferralsRef.current = currentReferrals;
       return () => clearTimeout(timer);
     }
     
     // Actualizamos el historial (incluso si bajaron porque el usuario deshizo un cambio)
-    prevMedalsRef.current = unlockedMedalsCount;
+    prevMedalsRef.current[albumActivo] = unlockedMedalsCount;
     prevReferralsRef.current = currentReferrals;
-  }, [unlockedMedalsCount, perfil?.referralsCount]);
+  }, [unlockedMedalsCount, perfil?.referralsCount, albumActivo]);
 
 
   if (isInitializing) {
