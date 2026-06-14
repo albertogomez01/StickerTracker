@@ -106,7 +106,7 @@ export default function App() {
     localStorage.setItem('panini_album', albumActivo);
   }, [albumActivo]);
 
-  // Detectar invitaciones por URL (?ref=USER_ID)
+  // Detectar invitaciones por URL (?ref=USER_ID) para referidos
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
