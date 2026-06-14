@@ -23,6 +23,14 @@ const Privacidad = lazy(() => import('./Privacidad'));
 const Terminos = lazy(() => import('./Terminos'));
 const Joyride = lazy(() => import('react-joyride').then(m => ({ default: m.default || m.Joyride || m })));
 
+const APP_VERSION = '1.1.0'; // Cambia este número en el futuro para volver a mostrar las notas a los usuarios
+const PATCH_NOTES = [
+  "🚀 Límite de caracteres del estado en el mercado ampliado a 120.",
+  "🔕 Añadida opción para borrar el historial de notificaciones.",
+  "🗺️ Ahora puedes repetir el tour interactivo desde tu perfil.",
+  "🐛 Mejoras internas de rendimiento y corrección de pequeños errores."
+];
+
 export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -59,6 +67,17 @@ export default function App() {
     return 'light';
   });
   const [runTour, setRunTour] = useState(false);
+  const [showPatchNotes, setShowPatchNotes] = useState(() => {
+    try {
+      const savedVersion = localStorage.getItem('panini_version');
+      // Si no tiene versión guardada, es nuevo. Le guardamos la versión actual y no le agobiamos con notas de parche.
+      if (!savedVersion) {
+        localStorage.setItem('panini_version', APP_VERSION);
+        return false;
+      }
+      return savedVersion !== APP_VERSION;
+    } catch (e) { return false; }
+  });
 
   const tourSteps = [
     { target: 'body', placement: 'center', title: '¡Bienvenido al Gestor!', content: 'Vamos a dar un rápido paseo interactivo para que no te pierdas ninguna función y completes tu colección más rápido.', disableBeacon: true },
@@ -231,6 +250,13 @@ export default function App() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         setUpdateAvailable(true);
+      });
+
+      // Comprobar silenciosamente si hay nuevas versiones cada hora (3600000 ms)
+      navigator.serviceWorker.ready.then((registration) => {
+        setInterval(() => {
+          registration.update().catch(() => {}); // Ignoramos errores si el usuario está offline
+        }, 60 * 60 * 1000);
       });
     }
   }, []);
@@ -854,6 +880,39 @@ export default function App() {
           Estás Offline
         </div>
       )}
+
+      {updateAvailable && (
+        <div className="animate-fade-in" style={{ position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-card)', border: '2px solid var(--accent-primary)', padding: '16px', borderRadius: '16px', zIndex: 10000, display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', width: '90%', maxWidth: '340px', textAlign: 'center' }}>
+          <div style={{ fontWeight: '900', fontSize: '16px', color: 'var(--text-primary)' }}>🚀 Actualización Disponible</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Hemos añadido nuevas funciones y mejoras a la aplicación.</div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+            <button onClick={() => setUpdateAvailable(false)} className="btn-secondary" style={{ flex: 1, padding: '10px', fontSize: '13px' }}>Más tarde</button>
+            <button onClick={() => window.location.reload()} className="btn-primary" style={{ flex: 1, padding: '10px', fontSize: '13px' }}>Actualizar Ahora</button>
+          </div>
+        </div>
+      )}
+
+      {showPatchNotes && (
+        <div className="modal-overlay" style={{ zIndex: 10005 }}>
+          <div className="card modal-content" style={{ margin: 0, padding: '24px', maxWidth: '340px', width: '90%', textAlign: 'center' }}>
+            <h2 style={{ marginTop: 0, color: 'var(--accent-primary)', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <span>✨</span> Novedades (v{APP_VERSION})
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '20px 0', fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: '1.5' }}>
+              {PATCH_NOTES.map((nota, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px' }}>
+                  <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>•</span>
+                  <span>{nota}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => { setShowPatchNotes(false); localStorage.setItem('panini_version', APP_VERSION); }} className="btn-primary" style={{ width: '100%' }}>
+              ¡Genial!
+            </button>
+          </div>
+        </div>
+      )}
+
       <Suspense fallback={null}>
         <Joyride
           steps={tourSteps}
