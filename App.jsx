@@ -13,8 +13,6 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster, toast } from 'react-hot-toast';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import * as JoyrideModule from 'react-joyride';
-const Joyride = JoyrideModule.default || JoyrideModule.Joyride || JoyrideModule;
 
 const Album = lazy(() => import('./Album'));
 const Importar = lazy(() => import('./Importar'));
@@ -23,6 +21,7 @@ const Mercado = lazy(() => import('./Mercado'));
 const Estadisticas = lazy(() => import('./Estadisticas'));
 const Privacidad = lazy(() => import('./Privacidad'));
 const Terminos = lazy(() => import('./Terminos'));
+const Joyride = lazy(() => import('react-joyride').then(m => ({ default: m.default || m.Joyride || m })));
 
 export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -845,17 +844,19 @@ export default function App() {
           Estás Offline
         </div>
       )}
-      <Joyride
-        steps={tourSteps}
-        run={runTour}
-        continuous={true}
-        showSkipButton={true}
-        showProgress={true}
-        callback={handleJoyrideCallback}
-        styles={{ options: { primaryColor: '#3B82F6', zIndex: 10000 } }}
-        locale={{ back: 'Anterior', close: 'Cerrar', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar tour' }}
-        floaterProps={{ disableAnimation: true }}
-      />
+      <Suspense fallback={null}>
+        <Joyride
+          steps={tourSteps}
+          run={runTour}
+          continuous={true}
+          showSkipButton={true}
+          showProgress={true}
+          callback={handleJoyrideCallback}
+          styles={{ options: { primaryColor: '#3B82F6', zIndex: 10000 } }}
+          locale={{ back: 'Anterior', close: 'Cerrar', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar tour' }}
+          floaterProps={{ disableAnimation: true }}
+        />
+      </Suspense>
 
       <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} actualizarPerfil={actualizarPerfil} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} startTour={() => setRunTour(true)} />
 
