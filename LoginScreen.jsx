@@ -15,24 +15,36 @@ export default function LoginScreen({ onLogin }) {
 
   useEffect(() => {
     // Comprueba si el usuario acaba de volver de una redirección de Google (común en iOS)
+    let isMounted = true;
     setIsLoading(true);
     getRedirectResult(auth).then((result) => {
-      if (result && result.user) {
-        onLogin(result.user);
-      } else {
-        setIsLoading(false);
+      if (isMounted) {
+        if (result && result.user) {
+          onLogin(result.user);
+        } else {
+          setIsLoading(false);
+        }
       }
     }).catch((error) => {
-      console.error("Error en redirect:", error);
-      setErrorMsg(error.message);
-      setIsLoading(false);
+      if (isMounted) {
+        console.error("Error en redirect:", error);
+        setErrorMsg("Error al iniciar sesión. Intenta abrir la página en tu navegador habitual (Chrome/Safari).");
+        setIsLoading(false);
+      }
     });
-  }, [onLogin]);
+    return () => { isMounted = false; };
+  }, []); // Dependencia vacía: solo comprobar el redirect al montar la pantalla
 
   const handleGoogleLogin = async () => {
     setErrorMsg('');
     setIsLoading(true);
     try {
+      // Detectar navegadores integrados (Instagram, Facebook) desde los cuales Google bloquea el inicio de sesión
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      if (ua.includes("FBAN") || ua.includes("FBAV") || ua.includes("Instagram") || ua.includes("Line")) {
+        throw new Error("Toca los 3 puntos arriba a la derecha y selecciona 'Abrir en navegador' (Chrome o Safari) para poder iniciar sesión.");
+      }
+
       // Detectar si es iOS o si la PWA está instalada
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
