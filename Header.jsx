@@ -11,6 +11,9 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editForm, setEditForm] = useState({ nickname: '', estadoTexto: '' });
 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
   const handleLogoClick = () => {
     setShowAlbumDropdown(!showAlbumDropdown);
     setShowDropdown(false);
@@ -138,7 +141,7 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
               <button onClick={() => { setShowDropdown(false); resetTheme(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
                 Tema Automático (Sistema)
               </button>
-              {(updateAvailable || installPrompt) && <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>}
+              {(updateAvailable || installPrompt || (isIOS && !isStandalone)) && <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>}
               <button onClick={() => { setShowDropdown(false); borrarNotificaciones(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 🔕 Borrar Notificaciones
               </button>
@@ -150,6 +153,10 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 <button onClick={async () => { installPrompt.prompt(); const { outcome } = await installPrompt.userChoice; if(outcome === 'accepted') setInstallPrompt(null); setShowDropdown(false); }} style={{ background: 'var(--bg-input)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
                   Instalar aplicación
                 </button>
+              ) : (isIOS && !isStandalone) ? (
+                <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-primary)', color: 'var(--text-secondary)', padding: '10px', borderRadius: '10px', fontSize: '12px', textAlign: 'center', lineHeight: '1.4' }}>
+                  Para instalar en iOS:<br/>Toca <b>Compartir <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', margin: '0 2px'}}><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></b> y luego<br/><b>"Añadir a la pantalla de inicio"</b>
+                </div>
               ) : null}
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
               <a href="https://ko-fi.com/stickertracker01" target="_blank" rel="noopener noreferrer" onClick={() => setShowDropdown(false)} style={{ textDecoration: 'none', color: '#FF5E5B', padding: '12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', background: 'rgba(255, 94, 91, 0.1)', textAlign: 'left', display: 'block' }}>
