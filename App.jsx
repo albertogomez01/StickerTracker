@@ -660,13 +660,14 @@ export default function App() {
     // Iniciar el tour cuando el usuario haya entrado y no lo haya visto nunca
     // La clave nueva (panini_tour_v1_seen) asegura que tanto nuevos como veteranos lo vean 1 vez.
     if (perfil && !isInitializing && !localStorage.getItem('panini_tour_v1_seen')) {
+      localStorage.setItem('panini_tour_v1_seen', 'true');
       setTimeout(() => setRunTour(true), 800);
     }
   }, [perfil, isInitializing]);
 
   const handleJoyrideCallback = (data) => {
-    const { status } = data;
-    if (['finished', 'skipped'].includes(status)) {
+    const { status, action } = data;
+    if (['finished', 'skipped'].includes(status) || action === 'close') {
       setRunTour(false);
       localStorage.setItem('panini_tour_v1_seen', 'true');
     }
