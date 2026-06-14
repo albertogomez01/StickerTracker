@@ -3,7 +3,7 @@ import './App.css';
 import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, resetTheme, actualizarPerfil, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable }) {
+export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, resetTheme, actualizarPerfil, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable, startTour }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
@@ -132,6 +132,9 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 ✨ Generar Avatar Aleatorio
               </button>
               <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>
+              <button onClick={() => { setShowDropdown(false); startTour(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                🗺️ Repetir Tour Guiado
+              </button>
               <button onClick={() => { setShowDropdown(false); resetTheme(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
                 Tema Automático (Sistema)
               </button>

@@ -13,6 +13,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster, toast } from 'react-hot-toast';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import Joyride, { STATUS } from 'react-joyride';
 
 const Album = lazy(() => import('./Album'));
 const Importar = lazy(() => import('./Importar'));
@@ -57,7 +58,16 @@ export default function App() {
     } catch (e) {}
     return 'light';
   });
-  const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('panini_tutorial_seen'));
+  const [runTour, setRunTour] = useState(false);
+
+  const tourSteps = [
+    { target: 'body', placement: 'center', title: '¡Bienvenido al Gestor!', content: 'Vamos a dar un rápido paseo interactivo para que no te pierdas ninguna función y completes tu colección más rápido.', disableBeacon: true },
+    { target: '.stats-card-modern', title: 'Tu Progreso', content: 'Aquí verás un resumen de cuántos cromos tienes, cuántos te faltan y tus repetidas en tiempo real.', disableBeacon: true },
+    { target: '.tour-album', title: '1. Mi Álbum', content: 'Marca los cromos que vayas consiguiendo. ¡Tócalos varias veces para sumarlos como repetidos!', disableBeacon: true },
+    { target: '.tour-mercado', title: '2. Mercado Público', content: 'Publica tu lista para que otros te encuentren. La app buscará automáticamente a usuarios compatibles contigo.', disableBeacon: true },
+    { target: '.tour-intercambios', title: '3. Intercambios y Chat', content: 'Agrega amigos, compara listas, genera imágenes para compartir y chatea en privado para coordinar trueques.', disableBeacon: true },
+    { target: '.tour-stats', title: 'Cotizador y Logros', content: 'Revisa qué cromos son los más buscados y difíciles de conseguir, y desbloquea medallas por tu avance.', disableBeacon: true }
+  ];
 
   useEffect(() => {
     // 📡 Listener para detectar conexión a Internet en tiempo real
@@ -620,6 +630,22 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    // Iniciar el tour cuando el usuario haya entrado y no lo haya visto nunca
+    // La clave nueva (panini_tour_v1_seen) asegura que tanto nuevos como veteranos lo vean 1 vez.
+    if (perfil && !isInitializing && !localStorage.getItem('panini_tour_v1_seen')) {
+      setTimeout(() => setRunTour(true), 800);
+    }
+  }, [perfil, isInitializing]);
+
+  const handleJoyrideCallback = (data) => {
+    const { status } = data;
+    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      setRunTour(false);
+      localStorage.setItem('panini_tour_v1_seen', 'true');
+    }
+  };
+
   const alternarCromoManual = (codigo) => {
     // Guardamos en memoria (Ref) cuál era el valor justo antes de que lo toquemos
     const valorPrevio = perfil?.stickers?.[codigo] || 0;
@@ -817,7 +843,19 @@ export default function App() {
           Estás Offline
         </div>
       )}
-      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} actualizarPerfil={actualizarPerfil} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} />
+      <Joyride
+        steps={tourSteps}
+        run={runTour}
+        continuous={true}
+        showSkipButton={true}
+        showProgress={true}
+        callback={handleJoyrideCallback}
+        styles={{ options: { primaryColor: '#3B82F6', zIndex: 10000 } }}
+        locale={{ back: 'Anterior', close: 'Cerrar', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar tour' }}
+        floaterProps={{ disableAnimation: true }}
+      />
+
+      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} actualizarPerfil={actualizarPerfil} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} startTour={() => setRunTour(true)} />
 
       <div className="content-wrapper" style={{ marginTop: '16px' }}>
         <div className="card stats-card-modern">
@@ -865,31 +903,6 @@ export default function App() {
         }}
       />
 
-      {showTutorial && (
-        <div className="modal-overlay">
-          <div className="card modal-content" style={{ margin: 0, padding: '24px' }}>
-            <h2 style={{ marginTop: 0, color: 'var(--accent-primary)', fontSize: '22px' }}>Bienvenido al Gestor</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5' }}>
-              Sigue estos sencillos pasos para completar tu coleccion rapidamente:
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '20px 0' }}>
-              <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '12px' }}>
-                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>1. Mi album</strong>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Marca los cromos que vas consiguiendo. Los repetidos se sumaran automaticamente.</span>
-              </div>
-              <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '12px' }}>
-                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>2. Mercado Publico</strong>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Publica tu lista para que otros te encuentren y solicita intercambios a perfiles compatibles.</span>
-              </div>
-              <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '12px' }}>
-                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>3. Intercambios</strong>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cruza tus listas con las de tus amigos y comparte imagenes resumen para coordinarte.</span>
-              </div>
-            </div>
-            <button onClick={() => { setShowTutorial(false); localStorage.setItem('panini_tutorial_seen', 'true'); }} className="btn-primary" style={{ width: '100%' }}>Comenzar</button>
-          </div>
-        </div>
-      )}
     </div>
 
   );

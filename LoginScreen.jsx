@@ -3,7 +3,6 @@ import { LOGO_URL } from './utils';
 import './App.css';
 import { auth, googleProvider } from './firebase';
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
-import { toast } from 'react-hot-toast';
 
 const Privacidad = lazy(() => import('./Privacidad'));
 const Terminos = lazy(() => import('./Terminos'));
@@ -28,7 +27,13 @@ export default function LoginScreen({ onLogin }) {
     }).catch((error) => {
       if (isMounted) {
         console.error("Error en redirect:", error);
-        setErrorMsg("Error al iniciar sesión. Intenta abrir la página en tu navegador habitual (Chrome/Safari).");
+        if (error.code === 'auth/unauthorized-domain') {
+          setErrorMsg("Dominio no autorizado en Firebase. Avisa al administrador.");
+        } else if (error.code === 'auth/web-storage-unsupported') {
+          setErrorMsg("Tu navegador bloquea cookies de terceros. Sal del modo incógnito o permite las cookies en los ajustes.");
+        } else {
+          setErrorMsg(`Error (${error.code || 'Desconocido'}): Intenta abrir la página en Chrome/Safari normal.`);
+        }
         setIsLoading(false);
       }
     });
@@ -54,14 +59,29 @@ export default function LoginScreen({ onLogin }) {
         await signInWithRedirect(auth, googleProvider);
       } else {
         // En PC y Android, el Popup es más rápido y fluido
-        const result = await signInWithPopup(auth, googleProvider);
-        await onLogin(result.user);
+        try {
+          const result = await signInWithPopup(auth, googleProvider);
+          await onLogin(result.user);
+        } catch (popupError) {
+          // Si el navegador bloquea la ventana emergente, usamos la redirección como plan B
+          if (popupError.code === 'auth/popup-blocked') {
+            await signInWithRedirect(auth, googleProvider);
+          } else {
+            throw popupError; // Lanzar el error para que lo atrape el catch principal
+          }
+        }
       }
     } catch (error) {
       // Si el usuario simplemente cerró la ventana, no lo tratamos como un error molesto
       if (error.code !== 'auth/popup-closed-by-user') {
         console.error("Error al iniciar sesión con Google:", error);
-        setErrorMsg(error.message);
+        if (error.code === 'auth/unauthorized-domain') {
+          setErrorMsg("Dominio no autorizado en Firebase. Avisa al administrador.");
+        } else if (error.code === 'auth/web-storage-unsupported') {
+          setErrorMsg("Tu navegador bloquea cookies de terceros. Sal del modo incógnito o permite las cookies en los ajustes.");
+        } else {
+          setErrorMsg(`Error (${error.code || 'Desconocido'}): ${error.message}`);
+        }
       }
       setIsLoading(false);
     }
