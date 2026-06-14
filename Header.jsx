@@ -3,7 +3,7 @@ import './App.css';
 import { LOGO_URL, ALBUMS } from './utils';
 import { toast } from 'react-hot-toast';
 
-export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, resetTheme, actualizarPerfil, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable, startTour }) {
+export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, toggleMute, theme, toggleTheme, resetTheme, actualizarPerfil, cambiarFoto, albumActivo, setAlbumActivo, installPrompt, setInstallPrompt, updateAvailable, startTour, borrarNotificaciones }) {
   const [isLogoAnimating, setIsLogoAnimating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAlbumDropdown, setShowAlbumDropdown] = useState(false);
@@ -139,6 +139,9 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 Tema Automático (Sistema)
               </button>
               {(updateAvailable || installPrompt) && <div style={{ height: '1px', background: 'var(--border-primary)', margin: '4px 0' }}></div>}
+              <button onClick={() => { setShowDropdown(false); borrarNotificaciones(); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                🔕 Borrar Notificaciones
+              </button>
               {updateAvailable ? (
                 <button onClick={() => window.location.reload()} style={{ background: 'var(--accent-primary)', border: 'none', color: 'white', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100%' }}>
                   Actualizar aplicación
@@ -201,8 +204,11 @@ export default function Header({ perfil, onLogout, onEliminarCuenta, isMuted, to
                 <input type="text" value={editForm.nickname} onChange={e => setEditForm({...editForm, nickname: e.target.value})} className="input-field" style={{ padding: '10px 14px', marginTop: '4px' }} maxLength={20} required />
               </div>
               <div>
-                <label style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Estado corto (Mercado)</label>
-                <input type="text" value={editForm.estadoTexto} onChange={e => setEditForm({...editForm, estadoTexto: e.target.value})} className="input-field" placeholder="Ej: Sólo cambio en Madrid..." style={{ padding: '10px 14px', marginTop: '4px' }} maxLength={40} />
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Estado (Mercado)</label>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{editForm.estadoTexto?.length || 0}/120</span>
+                </div>
+                <textarea value={editForm.estadoTexto} onChange={e => setEditForm({...editForm, estadoTexto: e.target.value})} className="input-field" placeholder="Ej: Busco a Messi, sólo cambio en Madrid..." style={{ padding: '10px 14px', marginTop: '4px', height: '60px', resize: 'none' }} maxLength={120} />
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
                 <button type="button" onClick={() => setShowEditProfile(false)} className="btn-secondary" style={{ flex: 1 }}>Cancelar</button>

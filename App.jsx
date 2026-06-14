@@ -646,6 +646,16 @@ export default function App() {
     }
   };
 
+  const borrarNotificaciones = async () => {
+    if (!perfil?.id || perfil.id.startsWith('invitado_')) return;
+    try {
+      await deleteDoc(doc(db, "notificaciones", perfil.id));
+      toast.success("Historial de notificaciones borrado.");
+    } catch (e) {
+      toast.error("Error al borrar notificaciones.");
+    }
+  };
+
   const alternarCromoManual = (codigo) => {
     // Guardamos en memoria (Ref) cuál era el valor justo antes de que lo toquemos
     const valorPrevio = perfil?.stickers?.[codigo] || 0;
@@ -858,7 +868,7 @@ export default function App() {
         />
       </Suspense>
 
-      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} actualizarPerfil={actualizarPerfil} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} startTour={() => setRunTour(true)} />
+      <Header perfil={perfil} onLogout={handleLogout} onEliminarCuenta={handleEliminarCuenta} isMuted={isMuted} toggleMute={toggleMute} theme={theme} toggleTheme={toggleTheme} resetTheme={resetTheme} actualizarPerfil={actualizarPerfil} cambiarFoto={cambiarFoto} albumActivo={albumActivo} setAlbumActivo={setAlbumActivo} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} updateAvailable={updateAvailable} startTour={() => setRunTour(true)} borrarNotificaciones={borrarNotificaciones} />
 
       <div className="content-wrapper" style={{ marginTop: '16px' }}>
         <div className="card stats-card-modern">
