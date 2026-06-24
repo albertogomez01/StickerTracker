@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Privacidad() {
   return (
-    <div style={{ lineHeight: '1.6', fontSize: '14px', color: 'var(--text-primary)' }}>
+    <div className="card" style={{ lineHeight: '1.6', fontSize: '14px', color: 'var(--text-primary)' }}>
       <h1 style={{ color: 'var(--accent-primary)', fontSize: '22px', marginTop: 0 }}>POLÍTICA DE PRIVACIDAD</h1>
       <p><strong>Última actualización: 13 de junio de 2026</strong></p>
       <p>El presente Documento establece los términos en que <strong>Sticker Tracker</strong> (en adelante, "el Titular") trata y protege la información que es proporcionada por los usuarios al utilizar la Aplicación Web Progresiva (PWA) <strong>Sticker Tracker Mundial 2026</strong> (en adelante, "la Aplicación").</p>

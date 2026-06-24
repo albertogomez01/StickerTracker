@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Terminos() {
   return (
-    <div style={{ lineHeight: '1.6', fontSize: '14px', color: 'var(--text-primary)' }}>
+    <div className="card" style={{ lineHeight: '1.6', fontSize: '14px', color: 'var(--text-primary)' }}>
       <h1 style={{ color: 'var(--accent-primary)', fontSize: '22px', marginTop: 0 }}>TÉRMINOS Y CONDICIONES DE USO</h1>
       <p><strong>Última actualización: 13 de junio de 2026</strong></p>
       <p>El acceso y el uso de la Aplicación Web Progresiva (PWA) <strong>Sticker Tracker Mundial 2026</strong> (en adelante, "la Aplicación") atribuyen la condición de usuario a quien lo haga, e implican la aceptación plena y sin reservas de todas y cada una de las disposiciones incluidas en este documento.</p>

@@ -955,8 +955,8 @@ export default function App() {
             <Route path="/intercambios" element={<Intercambios perfil={perfil} albumActivo={albumActivo} onLogout={handleLogout} />} />
             <Route path="/mercado" element={<Mercado perfil={perfil} albumActivo={albumActivo} onLogout={handleLogout} />} />
             <Route path="/stats" element={<Estadisticas albumActivo={albumActivo} perfil={perfil} />} />
-            <Route path="/privacidad" element={<div className="card"><Privacidad /></div>} />
-            <Route path="/terminos" element={<div className="card"><Terminos /></div>} />
+            <Route path="/privacidad" element={<Privacidad />} />
+            <Route path="/terminos" element={<Terminos />} />
             <Route path="*" element={<Navigate to="/intercambios" replace />} />
           </Routes>
         </Suspense>
