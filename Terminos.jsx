@@ -11,6 +11,11 @@ export default function Terminos() {
       <p>La Aplicación proporciona una herramienta digital independiente orientada a coleccionistas de cromos deportivos con fines puramente organizativos, recreativos y de entretenimiento personal. Sus funcionalidades principales consisten en el control digital del inventario personal de cromos del usuario, el cruce de datos técnico para calcular compatibilidades de intercambio y la publicación opcional de listas en un Mercado Público para facilitar el contacto entre usuarios.</p>
 
       <h3 style={{ color: 'var(--accent-primary)', fontSize: '16px', marginTop: '20px' }}>2. EXCLUSIÓN DE RESPONSABILIDAD (DESCARGO DE RESPONSABILIDAD DE MARCAS)</h3>
+      <div style={{ padding: '12px', borderRadius: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-primary)', fontSize: '13px', lineHeight: '1.5', margin: '12px 0' }}>
+        <p style={{ margin: 0 }}>
+          Esta aplicación es un proyecto independiente <strong>creado por un fan y para fans</strong>. No posee ninguna afiliación, patrocinio, ni respaldo oficial por parte de Panini S.p.A., la FIFA, o cualquier otra entidad titular de los derechos. Las marcas y nombres mencionados se utilizan con fines puramente informativos y de identificación, bajo el principio de uso legítimo (fair use).
+        </p>
+      </div>
       <p><strong>AVISO IMPORTANTE:</strong> Esta Aplicación es una plataforma completamente independiente, desarrollada por y para fans. No está afiliada, autorizada, patrocinada, asociada comercialmente, avalada ni vinculada de ninguna manera oficial con la Fédération Internationale de Football Association (FIFA), con la empresa Panini S.p.A., con sus filiales directas ni con ninguna otra entidad licenciataria oficial del torneo de fútbol del año 2026.</p>
       <p>Todas las marcas registradas, nombres de selecciones, nombres de futbolistas, diseños de colecciones y derechos de propiedad intelectual mencionados o utilizados en la interfaz pertenecen legítimamente a sus respectivos titulares. El uso de referencias numéricas o descriptivas se realiza exclusivamente bajo el amparo de la doctrina de uso legítimo (<em>fair use</em>) y con carácter puramente informativo.</p>
 

@@ -5,7 +5,7 @@ export default function Privacidad() {
     <div style={{ lineHeight: '1.6', fontSize: '14px', color: 'var(--text-primary)' }}>
       <h1 style={{ color: 'var(--accent-primary)', fontSize: '22px', marginTop: 0 }}>POLÍTICA DE PRIVACIDAD</h1>
       <p><strong>Última actualización: 13 de junio de 2026</strong></p>
-      <p>El presente Documento establece los términos en que <strong>[TU NOMBRE O PROYECTO]</strong> (en adelante, "el Titular") trata y protege la información que es proporcionada por los usuarios al utilizar la Aplicación Web Progresiva (PWA) <strong>Sticker Tracker Mundial 2026</strong> (en adelante, "la Aplicación").</p>
+      <p>El presente Documento establece los términos en que <strong>Sticker Tracker</strong> (en adelante, "el Titular") trata y protege la información que es proporcionada por los usuarios al utilizar la Aplicación Web Progresiva (PWA) <strong>Sticker Tracker Mundial 2026</strong> (en adelante, "la Aplicación").</p>
       <p>Esta Aplicación está comprometida con la seguridad de los datos de sus usuarios de acuerdo con el Reglamento General de Protección de Datos (RGPD) de la Unión Europea y demás normativas aplicables.</p>
 
       <h3 style={{ color: 'var(--accent-primary)', fontSize: '16px', marginTop: '20px' }}>1. INFORMACIÓN QUE SE RECOPILA</h3>
@@ -35,6 +35,7 @@ export default function Privacidad() {
 
       <h3 style={{ color: 'var(--accent-primary)', fontSize: '16px', marginTop: '20px' }}>4. DERECHOS DEL USUARIO (ARCO)</h3>
       <p>Como usuario, usted mantiene el control absoluto sobre sus datos. En cualquier momento puede ejercer sus derechos de acceso, rectificación, cancelación, oposición o supresión de sus datos personales. Para eliminar de forma inmediata y definitiva su cuenta y todo su historial de cromos de nuestra base de datos, puede hacerlo enviando una solicitud por escrito adjuntando copia de su documento de identidad al correo electrónico de contacto: <strong>[TU_CORREO@EMAIL.COM]</strong>.</p>
+      <p>Alternativamente, la aplicación ofrece una función de "Eliminar Cuenta" en el menú de perfil que ejecuta este proceso de forma automática e irreversible.</p>
 
       <h3 style={{ color: 'var(--accent-primary)', fontSize: '16px', marginTop: '20px' }}>5. ENLACES A TERCEROS</h3>
       <p>Esta Aplicación puede contener enlaces comerciales a sitios de terceros (como Amazon o eBay) mediante programas de afiliación. Una vez que usted haga clic en estos enlaces y abandone nuestra plataforma, ya no tenemos control sobre el sitio al que es redirigido y, por lo tanto, no somos responsables de los términos o privacidad de esos otros sitios.</p>
