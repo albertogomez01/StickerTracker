@@ -10,13 +10,11 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        // Cambiamos a la estrategia 'injectManifest' para usar nuestro propio service worker
-        strategies: 'injectManifest',
-        // Le indicamos dónde está nuestro archivo de service worker
-        srcDir: 'src',
-        filename: 'firebase-messaging-sw.js',
+        strategies: 'generateSW',
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          // Importamos nuestro script de firebase al service worker que se genera automáticamente
+          importScripts: ['firebase-messaging-sw.js']
         },
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
@@ -43,16 +41,6 @@ export default defineConfig(({ mode }) => {
       }
     })
     ],
-    // Aquí definimos las variables que se reemplazarán en el service worker
-    // Vite se encargará de sustituir import.meta.env.VITE_... por los valores reales.
-    define: {
-      'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(env.VITE_FIREBASE_API_KEY),
-      'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(env.VITE_FIREBASE_AUTH_DOMAIN),
-      'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(env.VITE_FIREBASE_PROJECT_ID),
-      'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': JSON.stringify(env.VITE_FIREBASE_STORAGE_BUCKET),
-      'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(env.VITE_FIREBASE_MESSAGING_SENDER_ID),
-      'import.meta.env.VITE_FIREBASE_APP_ID': JSON.stringify(env.VITE_FIREBASE_APP_ID),
-    },
     build: {
       chunkSizeWarningLimit: 1000
     }
