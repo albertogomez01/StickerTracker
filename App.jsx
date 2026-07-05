@@ -216,7 +216,7 @@ export default function App() {
           const messaging = getMessaging(auth.app);
           
           const currentToken = await getToken(messaging, { 
-            vapidKey: 'BH3vp1lZuGRH93hctIbqdUx3JwpdCN2swoGTmH17S2l_W_lPwRenMJItnUSdD6Hn157jOYgleWYl-rJLDuoPWLQ' 
+            vapidKey: import.meta.env.VITE_VAPID_KEY
           });
           
           if (currentToken) {

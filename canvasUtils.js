@@ -5,8 +5,16 @@ export const generarImagenTrueque = async (perfilNickname, nickAmigo, leDoyList,
   const ctx = canvas.getContext('2d');
   
   // 1. Fondo Oscuro (Dark Mode)
-  ctx.fillStyle = '#0F172A'; 
+  const bgGradient = ctx.createLinearGradient(0, 0, 0, 1920);
+  bgGradient.addColorStop(0, '#1E293B'); // Azul oscuro más profundo
+  bgGradient.addColorStop(1, '#0F172A'); // Azul noche
+  ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, 1080, 1920);
+
+  // Patrón de fondo sutil para dar textura
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
+  for(let i=0; i<1080; i+=20) { ctx.fillRect(i, 0, 1, 1920); }
+  for(let i=0; i<1920; i+=20) { ctx.fillRect(0, i, 1080, 1); }
 
   // 2. Marca de agua para viralidad
   ctx.save();
@@ -140,7 +148,7 @@ export const generarImagenTrueque = async (perfilNickname, nickAmigo, leDoyList,
   ctx.fillStyle = '#F8FAFC';
   ctx.font = '900 36px system-ui';
   ctx.textAlign = 'center';
-  ctx.fillText('¿Quieres intercambiar así de rápido?', 540, 1890);
+  ctx.fillText('Completa tu álbum más rápido. Únete a la comunidad.', 540, 1890);
 
   // 8. Crear la vista previa en el DOM antes de compartir o descargar
   const dataUrl = canvas.toDataURL('image/png');

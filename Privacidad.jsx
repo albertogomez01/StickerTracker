@@ -34,8 +34,8 @@ export default function Privacidad() {
       </ul>
 
       <h3 style={{ color: 'var(--accent-primary)', fontSize: '16px', marginTop: '20px' }}>4. DERECHOS DEL USUARIO (ARCO)</h3>
-      <p>Como usuario, usted mantiene el control absoluto sobre sus datos. En cualquier momento puede ejercer sus derechos de acceso, rectificación, cancelación, oposición o supresión de sus datos personales. Para eliminar de forma inmediata y definitiva su cuenta y todo su historial de cromos de nuestra base de datos, puede hacerlo enviando una solicitud por escrito adjuntando copia de su documento de identidad al correo electrónico de contacto: <strong>[TU_CORREO@EMAIL.COM]</strong>.</p>
-      <p>Alternativamente, la aplicación ofrece una función de "Eliminar Cuenta" en el menú de perfil que ejecuta este proceso de forma automática e irreversible.</p>
+      <p>Como usuario, usted mantiene el control absoluto sobre sus datos. En cualquier momento puede ejercer sus derechos de acceso, rectificación, cancelación, oposición o supresión de sus datos personales. Para eliminar de forma inmediata y definitiva su cuenta y todo su historial de cromos de nuestra base de datos, puede hacerlo enviando una solicitud por escrito adjuntando copia de su documento de identidad al correo electrónico de contacto: <strong>stickertraker@gmail.com</strong>.</p>
+      <p>Para su comodidad, la aplicación ofrece una función de <strong>"Eliminar Cuenta"</strong> en el menú de perfil que ejecuta este proceso de forma automática e irreversible. Este es el método recomendado para una baja inmediata.</p>
 
       <h3 style={{ color: 'var(--accent-primary)', fontSize: '16px', marginTop: '20px' }}>5. ENLACES A TERCEROS</h3>
       <p>Esta Aplicación puede contener enlaces comerciales a sitios de terceros (como Amazon o eBay) mediante programas de afiliación. Una vez que usted haga clic en estos enlaces y abandone nuestra plataforma, ya no tenemos control sobre el sitio al que es redirigido y, por lo tanto, no somos responsables de los términos o privacidad de esos otros sitios.</p>

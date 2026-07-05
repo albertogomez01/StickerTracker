@@ -127,13 +127,18 @@ export default function Estadisticas({ albumActivo, perfil }) {
 
   const getDificultad = () => {
     if (!statsCotizador) return null;
-    const { loBuscan, loTienenRepetido } = statsCotizador;
-    if (loBuscan === 0) return { texto: 'Muy Común', color: '#10B981' };
-    const ratio = loTienenRepetido / loBuscan;
-    if (ratio > 1.5) return { texto: 'Muy Común', color: '#10B981' };
-    if (ratio > 0.8) return { texto: 'Normal', color: '#3B82F6' };
-    if (ratio > 0.3) return { texto: 'Difícil', color: '#F59E0B' };
-    return { texto: 'Muy Difícil', color: '#EF4444' };
+    const { loBuscan, loTienenRepetido, total } = statsCotizador;
+    if (total === 0) return { texto: 'Sin datos', color: '#94A3B8', indice: 0 };
+
+    // Fórmula mejorada: pondera la escasez (pocos repetidos) y la alta demanda (muchos buscándolo)
+    const demandaNormalizada = (loBuscan / total);
+    const ofertaNormalizada = (loTienenRepetido / total);
+    const indice = Math.min(100, Math.max(0, Math.round((demandaNormalizada / (demandaNormalizada + ofertaNormalizada + 0.01)) * 100)));
+
+    if (indice > 85) return { texto: 'Muy Difícil', color: '#EF4444', indice };
+    if (indice > 65) return { texto: 'Difícil', color: '#F59E0B', indice };
+    if (indice > 40) return { texto: 'Normal', color: '#3B82F6', indice };
+    return { texto: 'Común', color: '#10B981', indice };
   };
 
   const selInfo = albumInfo.selecciones.find(s => s.id === selCotizador);
@@ -309,8 +314,11 @@ export default function Estadisticas({ albumActivo, perfil }) {
 
           {statsCotizador && (
             <div className="card" style={{ textAlign: 'center', padding: '20px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.5px' }}>Dificultad Estimada</div>
-              <div style={{ fontSize: '28px', fontWeight: '900', color: getDificultad().color, margin: '8px 0 16px 0' }}>{getDificultad().texto}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.5px' }}>Índice de Dificultad</div>
+              <div style={{ fontSize: '48px', fontWeight: '900', color: getDificultad().color, margin: '8px 0' }}>{getDificultad().indice}</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: getDificultad().color, marginBottom: '16px' }}>
+                ({getDificultad().texto})
+              </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div style={{ background: '#FEF2F2', padding: '12px', borderRadius: '12px' }}>

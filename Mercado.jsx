@@ -138,12 +138,22 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
         setPublicado(false);
         toast.success("Tu perfil ya no es visible en el mercado.");
       } else {
+        let rCount = 0;
+        const albumData = ALBUMS[albumActivo] || ALBUMS['mundial_2026'];
+        albumData.selecciones.forEach(sel => {
+          for (let i = 0; i < sel.total; i++) {
+            const cod = `${sel.id}_${i.toString().padStart(2, '0')}`;
+            const v = perfil.stickers?.[cod] || 0;
+            if (v >= 2) rCount += (v - 1);
+          }
+        });
         await setDoc(doc(db, getCol('mercado'), perfil.id), {
           nickname: perfil.nickname,
           stickers: perfil.stickers,
           timestamp: Date.now(),
           referralsCount: perfil.referralsCount || 0,
           cotizadorUsos: perfil.cotizadorUsos || 0,
+          repetidasCount: rCount,
           amigosCount: perfil.amigosCount || 0,
           estadoTexto: perfil.estadoTexto || '',
           createdAt: perfil.createdAt || Date.now()
