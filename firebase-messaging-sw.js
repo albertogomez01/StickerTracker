@@ -1,17 +1,18 @@
-// Import the Firebase app and messaging modules.
-// These scripts are loaded from the web, not from your node_modules.
+import { precacheAndRoute } from 'workbox-precaching';
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
 
-// Your web app's Firebase configuration.
-// It's crucial to use environment variables for this sensitive data.
+// self.__WB_MANIFEST is injected by the PWA plugin
+precacheAndRoute(self.__WB_MANIFEST);
+
+// Vite se encargará de reemplazar estas variables durante la compilación
 const firebaseConfig = {
-  apiKey: "%VITE_FIREBASE_API_KEY%",
-  authDomain: "%VITE_FIREBASE_AUTH_DOMAIN%",
-  projectId: "%VITE_FIREBASE_PROJECT_ID%",
-  storageBucket: "%VITE_FIREBASE_STORAGE_BUCKET%",
-  messagingSenderId: "%VITE_FIREBASE_MESSAGING_SENDER_ID%",
-  appId: "%VITE_FIREBASE_APP_ID%",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase

@@ -10,23 +10,13 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
+        // Cambiamos a la estrategia 'injectManifest' para usar nuestro propio service worker
+        strategies: 'injectManifest',
+        // Le indicamos dónde está nuestro archivo de service worker
+        srcDir: 'public',
+        filename: 'firebase-messaging-sw.js',
         workbox: {
-          // Esto asegura que nuestro service worker personalizado se maneje correctamente
-          // y que las variables de entorno se inyecten en él.
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-          // Modificamos el contenido del service worker en tiempo de compilación
-          // para reemplazar los placeholders con las claves reales.
-          inlineWorkboxRuntime: true,
-          template: 'public/firebase-messaging-sw.js',
-          transform(workboxConfig) {
-            workboxConfig.replace(/%VITE_FIREBASE_API_KEY%/g, env.VITE_FIREBASE_API_KEY)
-            workboxConfig.replace(/%VITE_FIREBASE_AUTH_DOMAIN%/g, env.VITE_FIREBASE_AUTH_DOMAIN)
-            workboxConfig.replace(/%VITE_FIREBASE_PROJECT_ID%/g, env.VITE_FIREBASE_PROJECT_ID)
-            workboxConfig.replace(/%VITE_FIREBASE_STORAGE_BUCKET%/g, env.VITE_FIREBASE_STORAGE_BUCKET)
-            workboxConfig.replace(/%VITE_FIREBASE_MESSAGING_SENDER_ID%/g, env.VITE_FIREBASE_MESSAGING_SENDER_ID)
-            workboxConfig.replace(/%VITE_FIREBASE_APP_ID%/g, env.VITE_FIREBASE_APP_ID)
-            return workboxConfig
-          }
         },
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
@@ -53,6 +43,16 @@ export default defineConfig(({ mode }) => {
       }
     })
     ],
+    // Aquí definimos las variables que se reemplazarán en el service worker
+    // Vite se encargará de sustituir import.meta.env.VITE_... por los valores reales.
+    define: {
+      'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(env.VITE_FIREBASE_API_KEY),
+      'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(env.VITE_FIREBASE_AUTH_DOMAIN),
+      'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(env.VITE_FIREBASE_PROJECT_ID),
+      'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': JSON.stringify(env.VITE_FIREBASE_STORAGE_BUCKET),
+      'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(env.VITE_FIREBASE_MESSAGING_SENDER_ID),
+      'import.meta.env.VITE_FIREBASE_APP_ID': JSON.stringify(env.VITE_FIREBASE_APP_ID),
+    },
     build: {
       chunkSizeWarningLimit: 1000
     }
