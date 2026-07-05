@@ -264,6 +264,10 @@ export default function Intercambios({ perfil, albumActivo, onLogout }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div className="card" style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Conecta y Compara</h3>
+        Aquí puedes añadir a tus amigos (tanto los que usan la app como los que no) para comparar vuestras listas de cromos. La aplicación calculará automáticamente qué cromos os podéis intercambiar. Además, puedes usar el chat privado para coordinar los trueques.
+      </div>
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>

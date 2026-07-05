@@ -112,7 +112,11 @@ export default function LoginScreen({ onLogin }) {
       <div className="login-card">
         <img src={LOGO_URL} alt="Logo" className="login-logo" />
         <h2>Mundial 2026</h2>
-        <p>Gestiona tus cromos y coordina intercambios de forma inteligente.</p>
+        <p style={{ lineHeight: 1.5, fontSize: '15px' }}>
+          La herramienta definitiva para coleccionistas.
+          Controla tus cromos, encuentra intercambios compatibles al instante y conecta con otros fans para completar el álbum del Mundial 2026.
+          ¡Todo gratis y sin esfuerzo!
+        </p>
         
         {errorMsg && <div style={{ color: '#DC2626', background: '#FEF2F2', padding: '10px', borderRadius: '8px', fontSize: '13px', marginBottom: '14px', border: '1px solid #FCA5A5' }}>Error: {errorMsg}</div>}
 

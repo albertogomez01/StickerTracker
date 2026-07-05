@@ -428,7 +428,11 @@ export default function Mercado({ perfil, albumActivo, onLogout }) {
         <>
           <div className="card">
             <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-primary)' }}>Mercado Público</h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', marginTop: 0 }}>Publica tu lista actual de cromos para que otros puedan encontrarte, o busca personas con las que tengas alta compatibilidad.</p>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', marginTop: 0, lineHeight: 1.5 }}>
+              El Mercado es el corazón de la comunidad. Al publicar tu perfil, permites que otros usuarios te encuentren y te envíen solicitudes de intercambio.
+              Usa el buscador de intercambios para encontrar automáticamente a los coleccionistas con mayor compatibilidad de cromos contigo.
+              ¡Es la forma más rápida de completar tu álbum!
+            </p>
             <button onClick={togglePublicar} className={publicado ? "btn-danger" : "btn-primary"} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} disabled={loading}>{loading ? 'Procesando...' : (publicado ? 'Ocultar mi perfil del Mercado' : 'Publicar mi lista en el Mercado')}</button>
           </div>
           <div className="card" style={{ padding: '12px' }}>
