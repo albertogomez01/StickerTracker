@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
         // Cambiamos a la estrategia 'injectManifest' para usar nuestro propio service worker
         strategies: 'injectManifest',
         // Le indicamos dónde está nuestro archivo de service worker
-        srcDir: 'public',
+        srcDir: 'src',
         filename: 'firebase-messaging-sw.js',
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
